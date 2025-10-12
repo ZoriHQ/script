@@ -1,0 +1,11 @@
+name: production
+url: https://cdn.zorihq.com/script.min.js
+protection_rules:
+  required_reviewers:
+    users: []
+    teams: []
+  wait_timer: 0
+  prevent_self_review: false
+deployment_branch_policy:
+  protected_branches: true
+  custom_branch_policies: false
