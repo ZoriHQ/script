@@ -1,3 +1,10 @@
+## [1.0.3](https://github.com/zorihq/script/compare/v1.0.2...v1.0.3) (2025-10-12)
+
+
+### 🐛 Bug Fixes
+
+* script name after the deployment ([658daa1](https://github.com/zorihq/script/commit/658daa1f09b33295f54fda67e2ddd51f88db9968))
+
 ## [1.0.2](https://github.com/zorihq/script/compare/v1.0.1...v1.0.2) (2025-10-12)
 
 
