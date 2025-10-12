@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/zorihq/script/compare/v1.0.0...v1.0.1) (2025-10-12)
+
+
+### 🐛 Bug Fixes
+
+* deploy cdn stage ([690261d](https://github.com/zorihq/script/commit/690261d0adc0850512d025a4e19a9ac7ebae07dc))
+
 ## 1.0.0 (2025-10-12)
 
 
