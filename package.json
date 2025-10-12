@@ -6,7 +6,7 @@
   "scripts": {
     "build": "npm run minify && npm run obfuscate",
     "minify": "terser script.js --compress --mangle --output dist/script.min.js",
-    "obfuscate": "javascript-obfuscator dist/script.min.js --output dist/script.obfuscated.js --compact true --control-flow-flattening true --dead-code-injection true --debug-protection true --disable-console-output true --identifier-names-generator hexadecimal --log false --rename-globals true --rotate-string-array true --self-defending true --string-array true --string-array-encoding base64 --string-array-threshold 0.75 --transform-object-keys true --unicode-escape-sequence false",
+    "obfuscate": "javascript-obfuscator dist/script.min.js --output dist/script.obfuscated.js --compact true --control-flow-flattening true --dead-code-injection true --debug-protection true --disable-console-output true --identifier-names-generator hexadecimal --log false --rename-globals true --self-defending true --string-array true --string-array-encoding base64 --string-array-threshold 0.75 --transform-object-keys true --unicode-escape-sequence false",
     "prepare-release": "npm run build && cp dist/script.obfuscated.js dist/script.min.js && cp dist/script.obfuscated.js script.min.js",
     "semantic-release": "semantic-release"
   },

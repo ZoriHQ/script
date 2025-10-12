@@ -9,6 +9,8 @@ dist/
 *.min.js
 *.obfuscated.js
 
+.wrangler/
+
 # Environment variables
 .env
 .env.local

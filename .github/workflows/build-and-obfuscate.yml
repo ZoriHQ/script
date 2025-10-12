@@ -2,55 +2,55 @@ name: Build and Obfuscate
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: npm ci
-      
-    - name: Create dist directory
-      run: mkdir -p dist
-      
-    - name: Minify JavaScript
-      run: npm run minify
-      
-    - name: Obfuscate JavaScript
-      run: npm run obfuscate
-      
-    - name: Prepare release files
-      run: npm run prepare-release
-      
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-artifacts
-        path: |
-          dist/
-          script.min.js
-        retention-days: 30
-        
-    - name: Verify obfuscated file
-      run: |
-        echo "Original file size:"
-        wc -c script.js
-        echo "Minified file size:"
-        wc -c dist/script.min.js
-        echo "Obfuscated file size:"
-        wc -c dist/script.obfuscated.js
-        echo "Final release file size:"
-        wc -c script.min.js
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "23.2.0"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm i -g pnpm && pnpm install --frozen-lockfile
+
+      - name: Create dist directory
+        run: mkdir -p dist
+
+      - name: Minify JavaScript
+        run: pnpm minify
+
+      - name: Obfuscate JavaScript
+        run: pnpm obfuscate
+
+      - name: Prepare release files
+        run: pnpm prepare-release
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            dist/
+            script.min.js
+          retention-days: 30
+
+      - name: Verify obfuscated file
+        run: |
+          echo "Original file size:"
+          wc -c script.js
+          echo "Minified file size:"
+          wc -c dist/script.min.js
+          echo "Obfuscated file size:"
+          wc -c dist/script.obfuscated.js
+          echo "Final release file size:"
+          wc -c script.min.js
