@@ -134,7 +134,7 @@ npm run semantic-release
 The build process creates:
 
 - `dist/script.min.js` - Minified version
-- `dist/script.obfuscated.js` - Obfuscated version  
+- `dist/script.obfuscated.js` - Obfuscated version
 - `script.min.js` - Production-ready copy (same as obfuscated)
 
 All artifacts are automatically attached to GitHub releases for easy CDN deployment.
@@ -146,7 +146,7 @@ All artifacts are automatically attached to GitHub releases for easy CDN deploym
 The script is automatically deployed to Cloudflare R2 CDN after each release:
 
 - **Versioned URL**: `https://cdn.zorihq.com/v{version}/script.min.js` (immutable, 1-year cache)
-- **Latest URL**: `https://cdn.zorihq.com/latest/script.min.js` (5-minute cache)  
+- **Latest URL**: `https://cdn.zorihq.com/latest/script.min.js` (5-minute cache)
 - **Root URL**: `https://cdn.zorihq.com/script.min.js` (1-hour cache)
 
 ### Manual Deployment
@@ -167,8 +167,8 @@ For automated releases and CDN deployment, configure these secrets in your GitHu
 - `GITHUB_TOKEN` - Automatically provided by GitHub (no setup needed)
 
 ### CDN Deployment Secrets
-- `CLOUDFLARE_API_TOKEN` - Your Cloudflare API token (e.g., `Jl7PqYhoWwCM6nJuAtAZbAzkjuXrHN0KK3bmVRJS`)
-- `CLOUDFLARE_ACCOUNT_ID` - Your Cloudflare account ID (e.g., `101a53cb6835c8eb626d34cee920b2db`)
+- `CLOUDFLARE_API_TOKEN` - Your Cloudflare API token
+- `CLOUDFLARE_ACCOUNT_ID` - Your Cloudflare account ID
 - `CLOUDFLARE_R2_BUCKET_NAME` - Your R2 bucket name
 - `CLOUDFLARE_R2_CUSTOM_DOMAIN` - Your custom domain (e.g., `cdn.zorihq.com`)
 
