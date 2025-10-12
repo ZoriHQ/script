@@ -33,5 +33,8 @@
     "javascript-obfuscator": "^4.1.1",
     "semantic-release": "^22.0.12",
     "terser": "^5.44.0"
+  },
+  "dependencies": {
+    "conventional-changelog-conventionalcommits": "^9.1.0"
   }
 }
