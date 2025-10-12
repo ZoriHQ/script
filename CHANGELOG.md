@@ -1,3 +1,10 @@
+## [1.0.4](https://github.com/zorihq/script/compare/v1.0.3...v1.0.4) (2025-10-12)
+
+
+### 🐛 Bug Fixes
+
+* updated default cloud url for tracking ([41d1979](https://github.com/zorihq/script/commit/41d1979764e473d5b81933f024c161589ffc1b7b))
+
 ## [1.0.3](https://github.com/zorihq/script/compare/v1.0.2...v1.0.3) (2025-10-12)
 
 
