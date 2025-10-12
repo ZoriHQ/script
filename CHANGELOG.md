@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/zorihq/script/compare/v1.0.1...v1.0.2) (2025-10-12)
+
+
+### 🐛 Bug Fixes
+
+* removed unknown command echo from wrangler deployment ([ee9c594](https://github.com/zorihq/script/commit/ee9c594b4b44e00415cd87dadc9a354b5de0ae02))
+
 ## [1.0.1](https://github.com/zorihq/script/compare/v1.0.0...v1.0.1) (2025-10-12)
 
 
