@@ -24,13 +24,13 @@ importers:
         specifier: ^12.1.0
         version: 12.1.0(semantic-release@22.0.12)
       javascript-obfuscator:
-        specifier: ^4.0.2
+        specifier: ^4.1.1
         version: 4.1.1
       semantic-release:
         specifier: ^22.0.12
         version: 22.0.12
       terser:
-        specifier: ^5.26.0
+        specifier: ^5.44.0
         version: 5.44.0
 
 packages:
