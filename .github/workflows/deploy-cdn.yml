@@ -81,9 +81,9 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: |
-            r2 object put ${{ secrets.CLOUDFLARE_R2_BUCKET_NAME }}/v${{ steps.version.outputs.version }}/script.min.js` --file=dist/script.min.js
-            r2 object put ${{ secrets.CLOUDFLARE_R2_BUCKET_NAME }}/latest/script.min.js` --file=dist/script.min.js
-            r2 object put ${{ secrets.CLOUDFLARE_R2_BUCKET_NAME }}/script.min.js` --file=dist/script.min.js
+            r2 object put ${{ secrets.CLOUDFLARE_R2_BUCKET_NAME }}/v${{ steps.version.outputs.version }}/script.min.js --file=dist/script.min.js
+            r2 object put ${{ secrets.CLOUDFLARE_R2_BUCKET_NAME }}/latest/script.min.js --file=dist/script.min.js
+            r2 object put ${{ secrets.CLOUDFLARE_R2_BUCKET_NAME }}/script.min.js --file=dist/script.min.js
 
       - name: Verify deployment
         env:
