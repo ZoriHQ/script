@@ -4,9 +4,9 @@
   "description": "ZoriHQ Analytics tracking script",
   "private": true,
   "scripts": {
-    "build": "npm run minify && npm run obfuscate",
+    "build": "npm run minify",
     "minify": "terser script.js --compress --mangle --output dist/script.min.js",
-    "prepare-release": "npm run build && cp dist/script.obfuscated.js dist/script.min.js && cp dist/script.obfuscated.js script.min.js",
+    "prepare-release": "npm run build",
     "semantic-release": "semantic-release"
   },
   "repository": {
