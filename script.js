@@ -5,7 +5,7 @@
   const VERSION = "1.0.0";
   const COOKIE_NAME = "zori_visitor_id";
   const COOKIE_EXPIRY_DAYS = 365 * 2; // 2 years
-  const DEFAULT_API_URL = "https://api.zorihq.com/events";
+  const DEFAULT_API_URL = "https://events.prod.zorihq.com/ingest";
 
   // Get script tag and extract configuration
   const scriptTag =
