@@ -1,3 +1,10 @@
+## [1.0.6](https://github.com/zorihq/script/compare/v1.0.5...v1.0.6) (2025-10-15)
+
+
+### 🐛 Bug Fixes
+
+* removed broken stage ([024c235](https://github.com/zorihq/script/commit/024c2359a38e3f765514283568e06e331c8e73ab))
+
 ## [1.0.5](https://github.com/zorihq/script/compare/v1.0.4...v1.0.5) (2025-10-15)
 
 
