@@ -57,12 +57,6 @@ jobs:
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "📋 Deploying version: ${VERSION}"
 
-      - name: Verify build output
-        run: |
-          echo "📊 Build artifacts:"
-          ls -la script.min.js
-          echo "📏 File size: $(wc -c < script.min.js) bytes"
-
       - name: Test Cloudflare API connection
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
