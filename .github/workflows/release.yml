@@ -49,7 +49,7 @@ jobs:
       - name: Verify build output
         run: |
           ls -la dist/
-          ls -la script.min.js
+          ls -la dist/script.min.js
 
       - name: Semantic Release
         env:

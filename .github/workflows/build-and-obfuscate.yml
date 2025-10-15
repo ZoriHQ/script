@@ -46,14 +46,3 @@ jobs:
             dist/
             script.min.js
           retention-days: 30
-
-      - name: Verify obfuscated file
-        run: |
-          echo "Original file size:"
-          wc -c script.js
-          echo "Minified file size:"
-          wc -c dist/script.min.js
-          echo "Obfuscated file size:"
-          wc -c dist/script.obfuscated.js
-          echo "Final release file size:"
-          wc -c script.min.js
