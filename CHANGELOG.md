@@ -1,3 +1,14 @@
+## [1.0.5](https://github.com/zorihq/script/compare/v1.0.4...v1.0.5) (2025-10-15)
+
+
+### 🐛 Bug Fixes
+
+* **ci:** build pipeline updated ([6d6e954](https://github.com/zorihq/script/commit/6d6e954af92c934b3189fdd8076ea73237ed6186))
+* npm build script ([d59b171](https://github.com/zorihq/script/commit/d59b1713fda3347b9af31023250a0bdd74fcb178))
+* reduced bundle size ([f2189d3](https://github.com/zorihq/script/commit/f2189d37ed41d2ebd8549a1019758951e0335ea6))
+* updated ingestion URL ([95e5dfd](https://github.com/zorihq/script/commit/95e5dfd1d335d81d88126877a90807709af09c5e))
+* updated lockfile ([5928816](https://github.com/zorihq/script/commit/5928816d0ab0fc09a212feee056f0f156b5a468c))
+
 ## [1.0.4](https://github.com/zorihq/script/compare/v1.0.3...v1.0.4) (2025-10-12)
 
 
