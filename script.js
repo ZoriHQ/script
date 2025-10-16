@@ -369,6 +369,7 @@
       user_agent: navigator.userAgent,
       referrer: document.referrer || null,
       page_url: window.location.pathname,
+      host: window.location.host,
       utm_parameters: getUTMParameters(),
     };
 
