@@ -1,3 +1,10 @@
+## [1.1.0](https://github.com/zorihq/script/compare/v1.0.6...v1.1.0) (2025-10-16)
+
+
+### 🚀 Features
+
+* added event host sending ([405a402](https://github.com/zorihq/script/commit/405a40241a61379b4cf9cef83901e58132e2654b))
+
 ## [1.0.6](https://github.com/zorihq/script/compare/v1.0.5...v1.0.6) (2025-10-15)
 
 
