@@ -1,3 +1,10 @@
+## [1.2.6](https://github.com/zorihq/script/compare/v1.2.5...v1.2.6) (2025-10-20)
+
+
+### 🐛 Bug Fixes
+
+* auto publish tag to git ([9cee5ac](https://github.com/zorihq/script/commit/9cee5aca6f69d7092a62d6282a32499420a19e70))
+
 ## [1.2.5](https://github.com/zorihq/script/compare/v1.2.4...v1.2.5) (2025-10-20)
 
 
