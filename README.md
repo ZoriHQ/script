@@ -9,13 +9,41 @@ A lightweight analytics tracking script with comprehensive browser fingerprintin
 - 🆔 **Persistent Visitor Identification** - Cookie-based visitor ID with 2-year expiry
 - 🎯 **UTM Parameter Tracking** - Automatic capture of campaign parameters
 - 🌐 **Comprehensive Metadata** - User agent, referrer, page URL, and host tracking
-- 📍 **Click Position Tracking** - CSS selector and coordinates for every click
+- 📍 **Enhanced Click Tracking** - Detects buttons, links, element text, and heatmap data (with screen dimensions)
 - 🔌 **JavaScript API** - Custom event tracking and user identification
 - 📱 **Cross-Platform Support** - Works on mobile and desktop browsers
+- 🔐 **GDPR Compliant** - Built-in consent management, DNT support, and opt-out functionality
+- ⏱️ **Session Tracking** - Automatic session management with 30-minute timeout
+- 📦 **Event Queue** - Track events before script loads (like gtag.js)
+- 🎨 **Heatmap Ready** - Click positions normalized by screen size
 
 ## Installation
 
-Include the script in your HTML with your publishable key:
+### Recommended: Async Loading with Event Queue
+
+For optimal performance, initialize the queue before loading the script:
+
+```html
+<!-- Initialize queue first -->
+<script>
+  window.ZoriHQ = window.ZoriHQ || [];
+</script>
+
+<!-- Load script asynchronously -->
+<script async src="https://cdn.zorihq.com/script.min.js"
+        data-key="your-publishable-key"></script>
+
+<!-- Track events immediately (even before script loads) -->
+<script>
+  window.ZoriHQ.push(['track', 'page_view']);
+  window.ZoriHQ.push(['identify', {
+    app_id: 'user_123',
+    email: 'user@example.com'
+  }]);
+</script>
+```
+
+### Basic Installation
 
 ```html
 <script src="https://cdn.zorihq.com/script.min.js" data-key="your-publishable-key"></script>
@@ -46,44 +74,114 @@ Once loaded, the script exposes a global `window.ZoriHQ` object for custom track
 ### Track Custom Events
 
 ```javascript
-// Track a custom event
+// Direct API (after script loads)
 window.ZoriHQ.track('button_clicked', {
   button_name: 'Sign Up',
   page: 'homepage'
 });
 
-// Track without custom properties
-window.ZoriHQ.track('newsletter_signup');
+// Queue method (works before script loads)
+window.ZoriHQ.push(['track', 'purchase_completed', {
+  product_id: 'prod_123',
+  amount: 99.99
+}]);
 ```
 
 ### Identify Users
 
+Link visitor cookies to your app users:
+
 ```javascript
-// Identify a user with traits
-window.ZoriHQ.identify('user_123', {
-  email: 'user@example.com',
-  plan: 'premium',
+// Direct API
+window.ZoriHQ.identify({
+  app_id: 'user_123',           // Your app's user ID
+  email: 'user@example.com',    // User email
+  fullname: 'John Doe',         // Full name
+  plan: 'premium',              // Additional properties
   signup_date: '2025-01-15'
 });
+
+// Queue method
+window.ZoriHQ.push(['identify', {
+  app_id: 'user_123',
+  email: 'user@example.com',
+  fullname: 'John Doe'
+}]);
+```
+
+### Consent Management (GDPR)
+
+```javascript
+// Grant consent
+window.ZoriHQ.setConsent({
+  analytics: true,    // Allow analytics
+  marketing: false    // Deny marketing
+});
+
+// Check consent status
+const hasConsent = window.ZoriHQ.hasConsent();
+
+// Opt out completely (GDPR right to be forgotten)
+window.ZoriHQ.optOut();
+
+// Queue method
+window.ZoriHQ.push(['setConsent', { analytics: true }]);
+window.ZoriHQ.push(['optOut']);
+```
+
+### Get IDs
+
+```javascript
+// Get visitor ID
+const visitorId = await window.ZoriHQ.getVisitorId();
+
+// Get current session ID
+const sessionId = window.ZoriHQ.getSessionId();
+
+// Queue method with callback
+window.ZoriHQ.push(['getVisitorId', function(id) {
+  console.log('Visitor ID:', id);
+}]);
 ```
 
 ## Automatic Event Tracking
 
 The script automatically tracks:
 
-- **page_view** - On initial load and includes page title, path, search params, and hash
-- **click** - Every click with CSS selector and x/y coordinates
+- **page_view** - On initial load with page title, path, search params, and hash
+- **click** - Every click with enhanced element detection:
+  - Element type (button, link, input, or clickable)
+  - CSS selector (optimized, not 10 levels deep)
+  - Element text content
+  - Link destination (for links)
+  - Click coordinates (x, y)
+  - Screen dimensions (for heatmap normalization)
+  - Data attributes
+- **session_start** - When a new session begins
+- **session_end** - When session expires (includes duration and page count)
 - **page_hidden** - When user switches tabs or minimizes browser
 - **page_visible** - When user returns to the page
-- **page_unload** - When user leaves the page
 
 All events include:
 - Unique visitor ID (persisted for 2 years)
+- Session ID (30-minute timeout)
 - UTM parameters (if present in URL)
 - Referrer
 - User agent
 - Page URL and host
 - Timestamp (UTC)
+
+### Session Tracking
+
+Sessions automatically restart when:
+- 30 minutes of inactivity pass
+- User arrives with different UTM parameters (new campaign)
+- Browser session ends
+
+Session data includes:
+- Session duration (milliseconds)
+- Page count (pages viewed in session)
+- Campaign attribution (preserved from session start)
 
 ## Browser Fingerprinting
 
@@ -99,6 +197,53 @@ On first visit, the script generates a comprehensive fingerprint including:
 - Battery status (if available)
 
 The fingerprint is stored in localStorage and used to help identify returning visitors even if cookies are cleared.
+
+## GDPR Compliance
+
+### Consent Management
+
+The script respects user privacy and includes built-in GDPR compliance:
+
+```html
+<script>
+  window.ZoriHQ = window.ZoriHQ || [];
+
+  // Set consent before tracking starts
+  window.ZoriHQ.push(['setConsent', {
+    analytics: true,   // Essential analytics
+    marketing: false   // Optional marketing
+  }]);
+</script>
+```
+
+### Do Not Track (DNT)
+
+The script automatically respects the browser's Do Not Track header by default. If DNT is enabled, no tracking occurs.
+
+### Right to be Forgotten
+
+Users can completely opt out and delete all their data:
+
+```javascript
+window.ZoriHQ.optOut();
+// Deletes: cookies, localStorage, blocks future tracking
+```
+
+### Cookies Used
+
+| Cookie | Purpose | Expiry | Required |
+|--------|---------|--------|----------|
+| `zori_visitor_id` | Anonymous visitor tracking | 2 years | Yes (with consent) |
+| `zori_session_id` | Session tracking | Browser close | Yes (with consent) |
+| `zori_consent` | Consent preferences | 2 years | Always |
+
+### Data Stored
+
+- **Cookies**: Visitor ID, session ID, consent preferences
+- **localStorage**: Browser fingerprint, session data, identified user info
+- **Server**: Events, timestamps, page URLs, user agents
+
+All data can be deleted via `optOut()` method.
 
 ## Development
 
