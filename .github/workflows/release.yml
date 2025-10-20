@@ -68,7 +68,7 @@ jobs:
           gh workflow run deploy-cdn.yml \
             --field version=${{ steps.semantic_release.outputs.new_version }}
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}
 
       - name: Upload release artifacts to GitHub release
         if: success()
