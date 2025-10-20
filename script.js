@@ -631,6 +631,11 @@
       if (session) {
         const duration = Date.now() - session.started_at;
 
+        // IMPORTANT: Update last_activity synchronously BEFORE async trackEvent
+        // This ensures the session persists across page refreshes
+        session.last_activity = Date.now();
+        localStorage.setItem("zori_session", JSON.stringify(session));
+
         // Track session end with duration (for page unload metrics)
         trackEvent("session_end", {
           duration_ms: duration,
