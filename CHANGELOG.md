@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/zorihq/script/compare/v1.2.1...v1.2.2) (2025-10-20)
+
+
+### 🐛 Bug Fixes
+
+* do not drop session from localstorage when page is unloaded ([a34571d](https://github.com/zorihq/script/commit/a34571db1d38236b8307b59e640d65df8edfb00a))
+
 ## [1.2.1](https://github.com/zorihq/script/compare/v1.2.0...v1.2.1) (2025-10-20)
 
 
