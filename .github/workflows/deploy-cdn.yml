@@ -1,11 +1,9 @@
 name: Deploy to CDN
 
 on:
-  release:
-    types: [published]
   push:
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
     inputs:
       version:
