@@ -514,9 +514,8 @@
 
   // ==================== SESSION MANAGEMENT ====================
 
-  function getOrCreateSession() {
+  function getSession() {
     try {
-      // Try to get existing session from localStorage
       const storedSession = localStorage.getItem("zori_session");
       if (storedSession) {
         const session = JSON.parse(storedSession);
@@ -529,24 +528,34 @@
         const hasNewUTM = currentUTM && currentUTM !== session.utm_hash;
 
         if (!isTimedOut && !hasNewUTM) {
-          // Update last activity
-          session.last_activity = now;
-          session.page_count = (session.page_count || 0) + 1;
-          localStorage.setItem("zori_session", JSON.stringify(session));
-          return session.session_id;
+          return session;
         }
       }
     } catch (e) {
-      // localStorage not available, fall back to cookie
+      // localStorage not available
     }
+    return null;
+  }
 
-    // Create new session
+  function updateSessionActivity() {
+    try {
+      const session = getSession();
+      if (session) {
+        session.last_activity = Date.now();
+        localStorage.setItem("zori_session", JSON.stringify(session));
+      }
+    } catch (e) {
+      // localStorage not available
+    }
+  }
+
+  function createNewSession() {
     const sessionId = generateSessionId();
     const sessionData = {
       session_id: sessionId,
       started_at: Date.now(),
       last_activity: Date.now(),
-      page_count: 1,
+      page_count: 0,
       utm_hash: getUTMHash(),
     };
 
@@ -562,7 +571,30 @@
     // Track session start
     trackSessionEvent("session_start", sessionId);
 
-    return sessionId;
+    return sessionData;
+  }
+
+  function getOrCreateSession() {
+    const session = getSession();
+    if (session) {
+      return session.session_id;
+    }
+
+    const newSession = createNewSession();
+    return newSession.session_id;
+  }
+
+  function incrementPageCount() {
+    try {
+      const session = getSession();
+      if (session) {
+        session.page_count = (session.page_count || 0) + 1;
+        session.last_activity = Date.now();
+        localStorage.setItem("zori_session", JSON.stringify(session));
+      }
+    } catch (e) {
+      // localStorage not available
+    }
   }
 
   async function trackSessionEvent(eventType, sessionId) {
@@ -651,6 +683,9 @@
 
     const visitorId = await getOrCreateVisitorId();
     const sessionId = getOrCreateSession();
+
+    // Update session activity timestamp (but don't increment page_count)
+    updateSessionActivity();
 
     const eventData = {
       event_name: eventName,
@@ -780,6 +815,9 @@
   // ==================== PAGE VIEW TRACKING ====================
 
   async function trackPageView() {
+    // Increment page count only on page views
+    incrementPageCount();
+
     await trackEvent("page_view", {
       page_title: document.title,
       page_path: window.location.pathname,
@@ -874,28 +912,12 @@
     // Setup click tracking
     setupClickTracking();
 
-    // Track page visibility changes
+    // Track page visibility changes (but don't end session)
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "hidden") {
         trackEvent("page_hidden");
       } else if (document.visibilityState === "visible") {
         trackEvent("page_visible");
-      }
-    });
-
-    // Track page unload and end session
-    window.addEventListener("beforeunload", function () {
-      endSession();
-    });
-
-    // Also end session on visibility hidden (for mobile)
-    let sessionEndPending = false;
-    document.addEventListener("visibilitychange", function () {
-      if (document.visibilityState === "hidden" && !sessionEndPending) {
-        sessionEndPending = true;
-        setTimeout(() => {
-          endSession();
-        }, 100);
       }
     });
 
@@ -908,12 +930,8 @@
       optOut: optOut,
       hasConsent: hasTrackingConsent,
       getSessionId: () => {
-        try {
-          const session = JSON.parse(localStorage.getItem("zori_session"));
-          return session?.session_id || null;
-        } catch (e) {
-          return null;
-        }
+        const session = getSession();
+        return session?.session_id || null;
       },
       push: function (command) {
         // Allow continued use of push() after initialization
