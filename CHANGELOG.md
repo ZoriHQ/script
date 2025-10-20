@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/zorihq/script/compare/v1.2.0...v1.2.1) (2025-10-20)
+
+
+### 🐛 Bug Fixes
+
+* session tracking ([8dd7966](https://github.com/zorihq/script/commit/8dd79660e213df3a0867ee6e455629137cd8a22e))
+
 ## [1.2.0](https://github.com/zorihq/script/compare/v1.1.0...v1.2.0) (2025-10-20)
 
 
