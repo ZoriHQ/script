@@ -1,3 +1,10 @@
+## [1.2.0](https://github.com/zorihq/script/compare/v1.1.0...v1.2.0) (2025-10-20)
+
+
+### 🚀 Features
+
+* added session tracking and GDPR ([c3ffb93](https://github.com/zorihq/script/commit/c3ffb93a8959c1dfdeef0e5e0f13b43632ac6bf2))
+
 ## [1.1.0](https://github.com/zorihq/script/compare/v1.0.6...v1.1.0) (2025-10-16)
 
 
