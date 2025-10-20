@@ -85,49 +85,116 @@
   function getCSSSelector(element) {
     if (!element) return null;
 
-    // If element has an ID, use it
+    // If element has an ID, use it (most specific)
     if (element.id) {
       return `#${element.id}`;
     }
 
-    // Build path from classes and tag name
-    let path = [];
-    while (element && element.nodeType === Node.ELEMENT_NODE) {
-      let selector = element.nodeName.toLowerCase();
+    // Build a shorter, more meaningful selector
+    let selector = element.nodeName.toLowerCase();
 
-      if (element.className && typeof element.className === "string") {
-        const classes = element.className
-          .trim()
-          .split(/\s+/)
-          .filter((c) => c);
-        if (classes.length > 0) {
-          selector += "." + classes.join(".");
-        }
+    // Add classes if available (limit to first 2 most relevant)
+    if (element.className && typeof element.className === "string") {
+      const classes = element.className
+        .trim()
+        .split(/\s+/)
+        .filter((c) => c)
+        .slice(0, 2); // Limit to 2 classes
+      if (classes.length > 0) {
+        selector += "." + classes.join(".");
       }
-
-      // Add nth-child if needed for uniqueness
-      let sibling = element;
-      let nth = 1;
-      while (sibling.previousElementSibling) {
-        sibling = sibling.previousElementSibling;
-        if (sibling.nodeName === element.nodeName) nth++;
-      }
-
-      if (
-        nth > 1 ||
-        (element.parentNode && element.parentNode.children.length > 1)
-      ) {
-        selector += `:nth-child(${nth})`;
-      }
-
-      path.unshift(selector);
-      element = element.parentNode;
-
-      // Stop at body or after reasonable depth
-      if (!element || element.nodeName === "BODY" || path.length > 5) break;
     }
 
-    return path.join(" > ");
+    // Look for the closest parent with an ID (within 3 levels)
+    let parent = element.parentNode;
+    let depth = 0;
+    while (parent && depth < 3) {
+      if (parent.id) {
+        return `#${parent.id} > ${selector}`;
+      }
+      parent = parent.parentNode;
+      depth++;
+    }
+
+    return selector;
+  }
+
+  function getClickElementInfo(element) {
+    if (!element) return null;
+
+    const info = {
+      tag: element.nodeName.toLowerCase(),
+      selector: getCSSSelector(element),
+    };
+
+    // Get text content (limit to 100 chars)
+    const text = element.textContent?.trim() || "";
+    if (text.length > 0) {
+      info.text = text.substring(0, 100);
+    }
+
+    // Check if it's a link
+    if (element.tagName === "A") {
+      info.type = "link";
+      info.href = element.href || null;
+      info.target = element.target || null;
+    }
+    // Check if it's a button
+    else if (
+      element.tagName === "BUTTON" ||
+      element.getAttribute("role") === "button"
+    ) {
+      info.type = "button";
+      info.button_type = element.type || "button";
+    }
+    // Check if it's an input
+    else if (element.tagName === "INPUT") {
+      info.type = "input";
+      info.input_type = element.type || "text";
+    }
+    // Check if it's a clickable element with a click handler
+    else if (
+      element.onclick ||
+      element.getAttribute("onclick") ||
+      window.getComputedStyle(element).cursor === "pointer"
+    ) {
+      info.type = "clickable";
+    } else {
+      // Check if parent is a link (common pattern: clicking on element inside <a>)
+      let parent = element.parentNode;
+      let depth = 0;
+      while (parent && depth < 3) {
+        if (parent.tagName === "A") {
+          info.type = "link";
+          info.href = parent.href || null;
+          info.target = parent.target || null;
+          info.parent_link = true;
+          break;
+        } else if (
+          parent.tagName === "BUTTON" ||
+          parent.getAttribute("role") === "button"
+        ) {
+          info.type = "button";
+          info.parent_button = true;
+          break;
+        }
+        parent = parent.parentNode;
+        depth++;
+      }
+    }
+
+    // Get data attributes (if any)
+    const dataAttrs = {};
+    for (let attr of element.attributes) {
+      if (attr.name.startsWith("data-")) {
+        dataAttrs[attr.name] = attr.value;
+      }
+    }
+    if (Object.keys(dataAttrs).length > 0) {
+      info.data_attributes = dataAttrs;
+    }
+
+    return info;
   }
 
   // ==================== BROWSER FINGERPRINTING ====================
@@ -375,8 +442,12 @@
 
     // Add click data if available
     if (clickData) {
-      eventData.click_on = clickData.selector;
-      eventData.click_position = clickData.position;
+      if (clickData.element) {
+        eventData.click_element = clickData.element;
+      }
+      if (clickData.position) {
+        eventData.click_position = clickData.position;
+      }
     }
 
     // Add custom properties if provided
@@ -393,15 +464,19 @@
     document.addEventListener(
       "click",
       async function (e) {
-        const selector = getCSSSelector(e.target);
-        const position = [e.clientX, e.clientY];
+        const elementInfo = getClickElementInfo(e.target);
 
         await trackEvent(
           "click",
           {},
           {
-            selector: selector,
-            position: position,
+            element: elementInfo,
+            position: {
+              x: e.clientX,
+              y: e.clientY,
+              screen_width: window.innerWidth,
+              screen_height: window.innerHeight,
+            },
           },
         );
       },
