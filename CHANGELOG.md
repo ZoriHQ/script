@@ -1,3 +1,11 @@
+## [1.2.3](https://github.com/zorihq/script/compare/v1.2.2...v1.2.3) (2025-10-20)
+
+
+### 🐛 Bug Fixes
+
+* auto publish tag to git ([e01f684](https://github.com/zorihq/script/commit/e01f6848302691a84b6434fa74f41ca638d87146))
+* update tracking script; trying to fix session issues ([144f571](https://github.com/zorihq/script/commit/144f571da1865bebdc33738c4117c3b177f4a434))
+
 ## [1.2.2](https://github.com/zorihq/script/compare/v1.2.1...v1.2.2) (2025-10-20)
 
 
