@@ -525,7 +525,13 @@
 
         // Check if session is still valid
         const isTimedOut = now - lastActivity > SESSION_TIMEOUT_MS;
-        const hasNewUTM = currentUTM && currentUTM !== session.utm_hash;
+
+        // Only create new session if BOTH have UTM params AND they're different
+        // If either is null, don't create new session based on UTM
+        const hasNewUTM =
+          currentUTM &&
+          session.utm_hash &&
+          currentUTM !== session.utm_hash;
 
         if (!isTimedOut && !hasNewUTM) {
           return session;
@@ -617,28 +623,23 @@
     sendEvent(eventData);
   }
 
-  function endSession() {
+  function trackSessionEnd() {
+    // Track session_end event with metrics but don't clear the session
+    // Session will only truly end after 30min timeout or new UTM
     try {
-      const storedSession = localStorage.getItem("zori_session");
-      if (storedSession) {
-        const session = JSON.parse(storedSession);
+      const session = getSession();
+      if (session) {
         const duration = Date.now() - session.started_at;
 
-        // Track session end with duration
+        // Track session end with duration (for page unload metrics)
         trackEvent("session_end", {
           duration_ms: duration,
-          page_count: session.page_count || 1,
+          page_count: session.page_count || 0,
         });
-
-        // Clear session
-        localStorage.removeItem("zori_session");
       }
     } catch (e) {
       // localStorage not available
     }
-
-    // Clear session cookie
-    document.cookie = `${SESSION_COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
   }
 
   // ==================== EVENT TRACKING ====================
@@ -919,6 +920,11 @@
       } else if (document.visibilityState === "visible") {
         trackEvent("page_visible");
       }
+    });
+
+    // Track session_end metrics on page unload (but don't clear session)
+    window.addEventListener("beforeunload", function () {
+      trackSessionEnd();
     });
 
     // Create API object with push support for future commands
