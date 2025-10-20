@@ -52,9 +52,23 @@ jobs:
           ls -la dist/script.min.js
 
       - name: Semantic Release
+        id: semantic_release
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
-        run: npx semantic-release
+        run: |
+          npx semantic-release
+          # Extract the new version from package.json
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "new_version=${NEW_VERSION}" >> $GITHUB_OUTPUT
+          echo "Released version: ${NEW_VERSION}"
+
+      - name: Trigger CDN Deployment
+        if: steps.semantic_release.outputs.new_version != ''
+        run: |
+          gh workflow run deploy-cdn.yml \
+            --field version=${{ steps.semantic_release.outputs.new_version }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload release artifacts to GitHub release
         if: success()

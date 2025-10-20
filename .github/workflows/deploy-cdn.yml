@@ -6,6 +6,12 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy (e.g., 1.2.3)'
+        required: true
+        type: string
 
 jobs:
   deploy-cdn:
