@@ -1,3 +1,10 @@
+## [1.2.7](https://github.com/zorihq/script/compare/v1.2.6...v1.2.7) (2025-10-20)
+
+
+### 🐛 Bug Fixes
+
+* use github PAT to publish a release ([ea9f11a](https://github.com/zorihq/script/commit/ea9f11adcff66e869e761e76ce964a600aef7fb4))
+
 ## [1.2.6](https://github.com/zorihq/script/compare/v1.2.5...v1.2.6) (2025-10-20)
 
 
