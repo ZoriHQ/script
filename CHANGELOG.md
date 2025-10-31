@@ -1,3 +1,10 @@
+## [1.2.9](https://github.com/zorihq/script/compare/v1.2.8...v1.2.9) (2025-10-31)
+
+
+### 🐛 Bug Fixes
+
+* new better tracking ([4f6455d](https://github.com/zorihq/script/commit/4f6455d94ddfd50814b82ea52027de52ed9cbcac))
+
 ## [1.2.8](https://github.com/zorihq/script/compare/v1.2.7...v1.2.8) (2025-10-22)
 
 
