@@ -1,3 +1,10 @@
+## [1.2.8](https://github.com/zorihq/script/compare/v1.2.7...v1.2.8) (2025-10-22)
+
+
+### 🐛 Bug Fixes
+
+* autobump script version ([274c2d5](https://github.com/zorihq/script/commit/274c2d544e7b0ec154f85a9705a6b596dd278138))
+
 ## [1.2.7](https://github.com/zorihq/script/compare/v1.2.6...v1.2.7) (2025-10-20)
 
 
