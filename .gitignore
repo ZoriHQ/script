@@ -82,3 +82,5 @@ jspm_packages/
 
 # DynamoDB Local files
 .dynamodb/
+
+.claude/

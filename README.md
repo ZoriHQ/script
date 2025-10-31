@@ -51,15 +51,23 @@ For optimal performance, initialize the queue before loading the script:
 
 ### Optional Configuration
 
-You can customize the ingestion endpoint:
+You can customize the ingestion endpoint and visibility tracking behavior:
 
 ```html
 <script
   src="https://cdn.zorihq.com/script.min.js"
   data-key="your-publishable-key"
-  data-base-url="https://your-custom-endpoint.com/ingest">
+  data-base-url="https://your-custom-endpoint.com/ingest"
+  data-comeback-threshold="30000"
+  data-track-quick-switches="false">
 </script>
 ```
+
+**Configuration Options:**
+
+- `data-base-url` - Custom ingestion endpoint (default: `https://ingestion.zorihq.com/ingest`)
+- `data-comeback-threshold` - Minimum hidden duration (in milliseconds) to trigger `user_comeback` event (default: `30000` / 30 seconds)
+- `data-track-quick-switches` - Set to `"true"` to track all visibility changes like the old behavior (default: `"false"`)
 
 ### CDN URLs
 
@@ -159,8 +167,12 @@ The script automatically tracks:
   - Data attributes
 - **session_start** - When a new session begins
 - **session_end** - When session expires (includes duration and page count)
-- **page_hidden** - When user switches tabs or minimizes browser
-- **page_visible** - When user returns to the page
+- **user_comeback** - When user returns after being away for significant time (>30 seconds by default)
+  - Includes `hidden_duration_ms` and `hidden_duration_seconds`
+  - Reduces event bloat by ignoring quick tab switches
+- **left_while_hidden** - When user closes/navigates away while page was hidden
+  - Includes `hidden_duration_ms` and `hidden_duration_seconds`
+  - Helps identify background tab closures vs. active exits
 
 All events include:
 - Unique visitor ID (persisted for 2 years)

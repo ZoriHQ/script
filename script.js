@@ -9,6 +9,8 @@
   const COOKIE_EXPIRY_DAYS = 365 * 2; // 2 years
   const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
   const DEFAULT_API_URL = "https://ingestion.zorihq.com/ingest";
+  const DEFAULT_COMEBACK_THRESHOLD_MS = 30 * 1000; // 30 seconds
+  const DEFAULT_TRACK_QUICK_SWITCHES = false;
 
   // Consent state
   let consentState = {
@@ -24,12 +26,17 @@
   const config = {
     publishableKey: scriptTag?.getAttribute("data-key") || "",
     baseUrl: scriptTag?.getAttribute("data-base-url") || DEFAULT_API_URL,
+    comebackThreshold: parseInt(scriptTag?.getAttribute("data-comeback-threshold")) || DEFAULT_COMEBACK_THRESHOLD_MS,
+    trackQuickSwitches: scriptTag?.getAttribute("data-track-quick-switches") === "true" || DEFAULT_TRACK_QUICK_SWITCHES,
   };
 
   if (!config.publishableKey) {
     console.error("[ZoriHQ] Missing data-key attribute");
     return;
   }
+
+  // Visibility tracking state
+  let pageHiddenAt = null;
 
   // ==================== UTILITY FUNCTIONS ====================
 
@@ -918,17 +925,53 @@
     // Setup click tracking
     setupClickTracking();
 
-    // Track page visibility changes (but don't end session)
+    // Track page visibility changes with smart comeback detection
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "hidden") {
-        trackEvent("page_hidden");
+        // Record when page becomes hidden
+        pageHiddenAt = Date.now();
+
+        // Only track if configured to track quick switches
+        if (config.trackQuickSwitches) {
+          trackEvent("page_hidden");
+        }
       } else if (document.visibilityState === "visible") {
-        trackEvent("page_visible");
+        if (pageHiddenAt) {
+          const hiddenDuration = Date.now() - pageHiddenAt;
+
+          // Only track comeback if hidden duration exceeds threshold
+          if (hiddenDuration > config.comebackThreshold) {
+            trackEvent("user_comeback", {
+              hidden_duration_ms: hiddenDuration,
+              hidden_duration_seconds: Math.round(hiddenDuration / 1000),
+            });
+          } else if (config.trackQuickSwitches) {
+            // Track quick switches only if explicitly configured
+            trackEvent("page_visible", {
+              hidden_duration_ms: hiddenDuration,
+            });
+          }
+
+          pageHiddenAt = null;
+        } else if (config.trackQuickSwitches) {
+          // Track page_visible even without prior hidden event (edge case)
+          trackEvent("page_visible");
+        }
       }
     });
 
     // Track session_end metrics on page unload (but don't clear session)
     window.addEventListener("beforeunload", function () {
+      // Check if user is leaving while page is hidden
+      if (document.visibilityState === "hidden" && pageHiddenAt) {
+        const hiddenDuration = Date.now() - pageHiddenAt;
+        trackEvent("left_while_hidden", {
+          hidden_duration_ms: hiddenDuration,
+          hidden_duration_seconds: Math.round(hiddenDuration / 1000),
+        });
+      }
+
+      // Regular session end tracking
       trackSessionEnd();
     });
 
