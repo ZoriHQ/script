@@ -1,7 +1,6 @@
 (function () {
   "use strict";
 
-  // Configuration
   const VERSION = "1.0.0";
   const COOKIE_NAME = "zori_visitor_id";
   const SESSION_COOKIE_NAME = "zori_session_id";
@@ -12,7 +11,6 @@
   const DEFAULT_COMEBACK_THRESHOLD_MS = 30 * 1000; // 30 seconds
   const DEFAULT_TRACK_QUICK_SWITCHES = false;
 
-  // Consent state
   let consentState = {
     analytics: null, // null = not set, true = granted, false = denied
     marketing: null,
@@ -26,8 +24,12 @@
   const config = {
     publishableKey: scriptTag?.getAttribute("data-key") || "",
     baseUrl: scriptTag?.getAttribute("data-base-url") || DEFAULT_API_URL,
-    comebackThreshold: parseInt(scriptTag?.getAttribute("data-comeback-threshold")) || DEFAULT_COMEBACK_THRESHOLD_MS,
-    trackQuickSwitches: scriptTag?.getAttribute("data-track-quick-switches") === "true" || DEFAULT_TRACK_QUICK_SWITCHES,
+    comebackThreshold:
+      parseInt(scriptTag?.getAttribute("data-comeback-threshold")) ||
+      DEFAULT_COMEBACK_THRESHOLD_MS,
+    trackQuickSwitches:
+      scriptTag?.getAttribute("data-track-quick-switches") === "true" ||
+      DEFAULT_TRACK_QUICK_SWITCHES,
   };
 
   if (!config.publishableKey) {
@@ -35,7 +37,6 @@
     return;
   }
 
-  // Visibility tracking state
   let pageHiddenAt = null;
 
   // ==================== UTILITY FUNCTIONS ====================
@@ -119,15 +120,12 @@
   function getCSSSelector(element) {
     if (!element) return null;
 
-    // If element has an ID, use it (most specific)
     if (element.id) {
       return `#${element.id}`;
     }
 
-    // Build a shorter, more meaningful selector
     let selector = element.nodeName.toLowerCase();
 
-    // Add classes if available (limit to first 2 most relevant)
     if (element.className && typeof element.className === "string") {
       const classes = element.className
         .trim()
@@ -139,7 +137,6 @@
       }
     }
 
-    // Look for the closest parent with an ID (within 3 levels)
     let parent = element.parentNode;
     let depth = 0;
     while (parent && depth < 3) {
@@ -161,40 +158,31 @@
       selector: getCSSSelector(element),
     };
 
-    // Get text content (limit to 100 chars)
     const text = element.textContent?.trim() || "";
     if (text.length > 0) {
       info.text = text.substring(0, 100);
     }
 
-    // Check if it's a link
     if (element.tagName === "A") {
       info.type = "link";
       info.href = element.href || null;
       info.target = element.target || null;
-    }
-    // Check if it's a button
-    else if (
+    } else if (
       element.tagName === "BUTTON" ||
       element.getAttribute("role") === "button"
     ) {
       info.type = "button";
       info.button_type = element.type || "button";
-    }
-    // Check if it's an input
-    else if (element.tagName === "INPUT") {
+    } else if (element.tagName === "INPUT") {
       info.type = "input";
       info.input_type = element.type || "text";
-    }
-    // Check if it's a clickable element with a click handler
-    else if (
+    } else if (
       element.onclick ||
       element.getAttribute("onclick") ||
       window.getComputedStyle(element).cursor === "pointer"
     ) {
       info.type = "clickable";
     } else {
-      // Check if parent is a link (common pattern: clicking on element inside <a>)
       let parent = element.parentNode;
       let depth = 0;
       while (parent && depth < 3) {
@@ -217,7 +205,6 @@
       }
     }
 
-    // Get data attributes (if any)
     const dataAttrs = {};
     for (let attr of element.attributes) {
       if (attr.name.startsWith("data-")) {
@@ -236,14 +223,12 @@
   async function generateFingerprint() {
     const fp = {};
 
-    // Screen properties
     fp.screen_resolution = `${window.screen.width}x${window.screen.height}`;
     fp.screen_color_depth = window.screen.colorDepth;
     fp.screen_pixel_depth = window.screen.pixelDepth;
     fp.viewport_size = `${window.innerWidth}x${window.innerHeight}`;
     fp.screen_orientation = window.screen.orientation?.type || "unknown";
 
-    // Browser properties
     fp.user_agent = navigator.userAgent;
     fp.platform = navigator.platform;
     fp.language = navigator.language;
@@ -251,19 +236,16 @@
     fp.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     fp.timezone_offset = new Date().getTimezoneOffset();
 
-    // Hardware
     fp.hardware_concurrency = navigator.hardwareConcurrency || "unknown";
     fp.device_memory = navigator.deviceMemory || "unknown";
     fp.max_touch_points = navigator.maxTouchPoints || 0;
 
-    // Browser capabilities
     fp.cookies_enabled = navigator.cookieEnabled;
     fp.do_not_track = navigator.doNotTrack || "unknown";
     fp.local_storage = typeof Storage !== "undefined";
     fp.session_storage = typeof Storage !== "undefined";
     fp.indexed_db = !!window.indexedDB;
 
-    // Plugins
     if (navigator.plugins && navigator.plugins.length > 0) {
       fp.plugins = Array.from(navigator.plugins)
         .map((p) => p.name)
@@ -273,7 +255,6 @@
       fp.plugins = "none";
     }
 
-    // Canvas fingerprint
     try {
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
@@ -295,7 +276,6 @@
       fp.canvas_fingerprint = "error";
     }
 
-    // WebGL fingerprint
     try {
       const canvas = document.createElement("canvas");
       const gl =
@@ -318,7 +298,6 @@
       fp.webgl_renderer = "error";
     }
 
-    // Audio context fingerprint
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       if (AudioContext) {
@@ -351,7 +330,6 @@
       fp.audio_context = "error";
     }
 
-    // Media devices
     if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
       try {
         const devices = await navigator.mediaDevices.enumerateDevices();
@@ -367,7 +345,6 @@
       fp.media_devices = "not_supported";
     }
 
-    // Connection info
     if (
       navigator.connection ||
       navigator.mozConnection ||
@@ -384,7 +361,6 @@
       };
     }
 
-    // Battery (if available)
     if (navigator.getBattery) {
       try {
         const battery = await navigator.getBattery();
@@ -397,7 +373,6 @@
       }
     }
 
-    // Generate hash from all fingerprint data
     const fpString = JSON.stringify(fp);
     let hash = 0;
     for (let i = 0; i < fpString.length; i++) {
@@ -420,13 +395,10 @@
       visitorId = generateUUID();
       setCookie(COOKIE_NAME, visitorId, COOKIE_EXPIRY_DAYS);
 
-      // Store fingerprint on first visit
       const fingerprint = await generateFingerprint();
       try {
         localStorage.setItem("zori_fp", JSON.stringify(fingerprint));
-      } catch (e) {
-        // localStorage not available
-      }
+      } catch (e) {}
     }
 
     return visitorId;
@@ -435,8 +407,8 @@
   // ==================== CONSENT MANAGEMENT ====================
 
   function checkDoNotTrack() {
-    // Check Do Not Track header
-    const dnt = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+    const dnt =
+      navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
     return dnt === "1" || dnt === "yes";
   }
 
@@ -466,7 +438,6 @@
     consentState.marketing = preferences.marketing || false;
     consentState.hasConsent = true;
 
-    // Save to cookie
     const consentData = {
       analytics: consentState.analytics,
       marketing: consentState.marketing,
@@ -476,7 +447,7 @@
     setCookie(
       CONSENT_COOKIE_NAME,
       encodeURIComponent(JSON.stringify(consentData)),
-      COOKIE_EXPIRY_DAYS
+      COOKIE_EXPIRY_DAYS,
     );
 
     console.log("[ZoriHQ] Consent preferences saved:", consentData);
@@ -484,29 +455,23 @@
   }
 
   function hasTrackingConsent() {
-    // Check DNT first if configured to respect it
     if (consentState.respectDNT && checkDoNotTrack()) {
       return false;
     }
 
-    // If no consent has been explicitly set, allow analytics by default
-    // (You may want to change this based on your privacy policy)
     if (!consentState.hasConsent) {
-      return true; // Implicit consent (change to false for opt-in only)
+      return true;
     }
 
     return consentState.analytics === true;
   }
 
   function optOut() {
-    // Disable all tracking
     setConsent({ analytics: false, marketing: false });
 
-    // Clear visitor ID and session
     document.cookie = `${COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
     document.cookie = `${SESSION_COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
 
-    // Clear localStorage
     try {
       localStorage.removeItem("zori_fp");
       localStorage.removeItem("zori_user_info");
@@ -530,23 +495,16 @@
         const lastActivity = session.last_activity || 0;
         const currentUTM = getUTMHash();
 
-        // Check if session is still valid
         const isTimedOut = now - lastActivity > SESSION_TIMEOUT_MS;
 
-        // Only create new session if BOTH have UTM params AND they're different
-        // If either is null, don't create new session based on UTM
         const hasNewUTM =
-          currentUTM &&
-          session.utm_hash &&
-          currentUTM !== session.utm_hash;
+          currentUTM && session.utm_hash && currentUTM !== session.utm_hash;
 
         if (!isTimedOut && !hasNewUTM) {
           return session;
         }
       }
-    } catch (e) {
-      // localStorage not available
-    }
+    } catch (e) {}
     return null;
   }
 
@@ -557,9 +515,7 @@
         session.last_activity = Date.now();
         localStorage.setItem("zori_session", JSON.stringify(session));
       }
-    } catch (e) {
-      // localStorage not available
-    }
+    } catch (e) {}
   }
 
   function createNewSession() {
@@ -574,14 +530,10 @@
 
     try {
       localStorage.setItem("zori_session", JSON.stringify(sessionData));
-    } catch (e) {
-      // localStorage not available
-    }
+    } catch (e) {}
 
-    // Also set a session cookie (expires when browser closes)
     document.cookie = `${SESSION_COOKIE_NAME}=${sessionId};path=/;SameSite=Lax`;
 
-    // Track session start
     trackSessionEvent("session_start", sessionId);
 
     return sessionData;
@@ -605,13 +557,10 @@
         session.last_activity = Date.now();
         localStorage.setItem("zori_session", JSON.stringify(session));
       }
-    } catch (e) {
-      // localStorage not available
-    }
+    } catch (e) {}
   }
 
   async function trackSessionEvent(eventType, sessionId) {
-    // Internal function to track session events without recursion
     const visitorId = await getOrCreateVisitorId();
 
     const eventData = {
@@ -631,27 +580,20 @@
   }
 
   function trackSessionEnd() {
-    // Track session_end event with metrics but don't clear the session
-    // Session will only truly end after 30min timeout or new UTM
     try {
       const session = getSession();
       if (session) {
         const duration = Date.now() - session.started_at;
 
-        // IMPORTANT: Update last_activity synchronously BEFORE async trackEvent
-        // This ensures the session persists across page refreshes
         session.last_activity = Date.now();
         localStorage.setItem("zori_session", JSON.stringify(session));
 
-        // Track session end with duration (for page unload metrics)
         trackEvent("session_end", {
           duration_ms: duration,
           page_count: session.page_count || 0,
         });
       }
-    } catch (e) {
-      // localStorage not available
-    }
+    } catch (e) {}
   }
 
   // ==================== EVENT TRACKING ====================
@@ -673,7 +615,10 @@
       });
 
       if (!response.ok) {
-        console.warn(`[ZoriHQ] Failed to send event to ${endpoint}:`, response.status);
+        console.warn(
+          `[ZoriHQ] Failed to send event to ${endpoint}:`,
+          response.status,
+        );
         return false;
       }
       return true;
@@ -688,7 +633,6 @@
     customProperties = {},
     clickData = null,
   ) {
-    // Check consent before tracking
     if (!hasTrackingConsent()) {
       console.log("[ZoriHQ] Tracking blocked: no consent or DNT enabled");
       return false;
@@ -697,7 +641,6 @@
     const visitorId = await getOrCreateVisitorId();
     const sessionId = getOrCreateSession();
 
-    // Update session activity timestamp (but don't increment page_count)
     updateSessionActivity();
 
     const eventData = {
@@ -713,7 +656,6 @@
       utm_parameters: getUTMParameters(),
     };
 
-    // Add click data if available
     if (clickData) {
       if (clickData.element) {
         eventData.click_element = clickData.element;
@@ -723,7 +665,6 @@
       }
     }
 
-    // Add custom properties if provided
     if (customProperties && Object.keys(customProperties).length > 0) {
       eventData.custom_properties = customProperties;
     }
@@ -734,11 +675,12 @@
 
   async function identifyUser(userInfo) {
     if (!userInfo || typeof userInfo !== "object") {
-      console.error("[ZoriHQ] identifyUser requires an object with user information");
+      console.error(
+        "[ZoriHQ] identifyUser requires an object with user information",
+      );
       return false;
     }
 
-    // Check consent before identifying
     if (!hasTrackingConsent()) {
       console.log("[ZoriHQ] Identification blocked: no consent or DNT enabled");
       return false;
@@ -756,7 +698,6 @@
       host: window.location.host,
     };
 
-    // Add user info fields
     if (userInfo.app_id) {
       identifyData.app_id = userInfo.app_id;
     }
@@ -769,7 +710,6 @@
       identifyData.fullname = userInfo.fullname || userInfo.full_name;
     }
 
-    // Add any additional properties
     const additionalProps = { ...userInfo };
     delete additionalProps.app_id;
     delete additionalProps.email;
@@ -782,18 +722,18 @@
 
     const success = await sendEvent(identifyData, "/identify");
 
-    // Store user info locally for subsequent events
     if (success) {
       try {
-        localStorage.setItem("zori_user_info", JSON.stringify({
-          app_id: userInfo.app_id,
-          email: userInfo.email,
-          fullname: userInfo.fullname || userInfo.full_name,
-          identified_at: new Date().toISOString(),
-        }));
-      } catch (e) {
-        // localStorage not available
-      }
+        localStorage.setItem(
+          "zori_user_info",
+          JSON.stringify({
+            app_id: userInfo.app_id,
+            email: userInfo.email,
+            fullname: userInfo.fullname || userInfo.full_name,
+            identified_at: new Date().toISOString(),
+          }),
+        );
+      } catch (e) {}
     }
 
     return success;
@@ -828,7 +768,6 @@
   // ==================== PAGE VIEW TRACKING ====================
 
   async function trackPageView() {
-    // Increment page count only on page views
     incrementPageCount();
 
     await trackEvent("page_view", {
@@ -883,17 +822,15 @@
   // ==================== INITIALIZATION ====================
 
   async function init() {
-    // Capture any commands that were queued before script loaded
-    const queuedCommands = Array.isArray(window.ZoriHQ) ? [...window.ZoriHQ] : [];
+    const queuedCommands = Array.isArray(window.ZoriHQ)
+      ? [...window.ZoriHQ]
+      : [];
 
-    // Load consent state from cookie
     loadConsentState();
 
-    // Check if tracking is allowed
     if (!hasTrackingConsent()) {
       console.log("[ZoriHQ] Analytics disabled: no consent or DNT enabled");
 
-      // Still expose API for later consent grant
       const api = {
         track: trackEvent,
         identify: identifyUser,
@@ -913,25 +850,18 @@
       return;
     }
 
-    // Ensure visitor ID is set
     await getOrCreateVisitorId();
 
-    // Initialize session
     getOrCreateSession();
 
-    // Track initial page view
     await trackPageView();
 
-    // Setup click tracking
     setupClickTracking();
 
-    // Track page visibility changes with smart comeback detection
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "hidden") {
-        // Record when page becomes hidden
         pageHiddenAt = Date.now();
 
-        // Only track if configured to track quick switches
         if (config.trackQuickSwitches) {
           trackEvent("page_hidden");
         }
@@ -939,14 +869,12 @@
         if (pageHiddenAt) {
           const hiddenDuration = Date.now() - pageHiddenAt;
 
-          // Only track comeback if hidden duration exceeds threshold
           if (hiddenDuration > config.comebackThreshold) {
             trackEvent("user_comeback", {
               hidden_duration_ms: hiddenDuration,
               hidden_duration_seconds: Math.round(hiddenDuration / 1000),
             });
           } else if (config.trackQuickSwitches) {
-            // Track quick switches only if explicitly configured
             trackEvent("page_visible", {
               hidden_duration_ms: hiddenDuration,
             });
@@ -954,15 +882,12 @@
 
           pageHiddenAt = null;
         } else if (config.trackQuickSwitches) {
-          // Track page_visible even without prior hidden event (edge case)
           trackEvent("page_visible");
         }
       }
     });
 
-    // Track session_end metrics on page unload (but don't clear session)
     window.addEventListener("beforeunload", function () {
-      // Check if user is leaving while page is hidden
       if (document.visibilityState === "hidden" && pageHiddenAt) {
         const hiddenDuration = Date.now() - pageHiddenAt;
         trackEvent("left_while_hidden", {
@@ -971,11 +896,9 @@
         });
       }
 
-      // Regular session end tracking
       trackSessionEnd();
     });
 
-    // Create API object with push support for future commands
     const api = {
       track: trackEvent,
       identify: identifyUser,
@@ -988,25 +911,23 @@
         return session?.session_id || null;
       },
       push: function (command) {
-        // Allow continued use of push() after initialization
         if (Array.isArray(command)) {
           processQueuedCommands([command]);
         } else {
-          console.warn("[ZoriHQ] push() expects an array, e.g., ['track', 'event_name']");
+          console.warn(
+            "[ZoriHQ] push() expects an array, e.g., ['track', 'event_name']",
+          );
         }
       },
     };
 
-    // Replace array with API object
     window.ZoriHQ = api;
 
-    // Process any commands that were queued before script loaded
     processQueuedCommands(queuedCommands);
 
     console.log("[ZoriHQ] Analytics initialized with consent");
   }
 
-  // Start tracking when DOM is ready
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {
