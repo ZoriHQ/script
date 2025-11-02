@@ -1,3 +1,10 @@
+## [1.2.10](https://github.com/zorihq/script/compare/v1.2.9...v1.2.10) (2025-11-02)
+
+
+### 🐛 Bug Fixes
+
+* clean up ([5bc2ff0](https://github.com/zorihq/script/commit/5bc2ff0713a2200b34103c81319c81591ce4cc13))
+
 ## [1.2.9](https://github.com/zorihq/script/compare/v1.2.8...v1.2.9) (2025-10-31)
 
 
