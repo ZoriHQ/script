@@ -1,0 +1,36 @@
+{
+  "name": "@zorihq/nextjs",
+  "version": "1.0.0",
+  "description": "ZoriHQ Analytics for Next.js (Client-side)",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "echo 'Build with your preferred bundler (rollup, tsup, etc.)'",
+    "test": "echo 'Tests not yet configured'"
+  },
+  "keywords": [
+    "analytics",
+    "nextjs",
+    "next",
+    "tracking",
+    "zorihq"
+  ],
+  "author": "ZoriHQ",
+  "license": "MIT",
+  "peerDependencies": {
+    "next": ">=13.0.0",
+    "react": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "next": "^14.0.0",
+    "react": "^18.0.0",
+    "typescript": "^5.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zorihq/script.git",
+    "directory": "nextjs"
+  }
+}

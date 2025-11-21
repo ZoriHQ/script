@@ -1,0 +1,34 @@
+{
+  "name": "@zorihq/svelte",
+  "version": "1.0.0",
+  "description": "ZoriHQ Analytics for Svelte",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "svelte": "index.js",
+  "scripts": {
+    "build": "echo 'Build with your preferred bundler (rollup, svelte-package, etc.)'",
+    "test": "echo 'Tests not yet configured'"
+  },
+  "keywords": [
+    "analytics",
+    "svelte",
+    "sveltekit",
+    "tracking",
+    "zorihq"
+  ],
+  "author": "ZoriHQ",
+  "license": "MIT",
+  "peerDependencies": {
+    "svelte": ">=3.0.0"
+  },
+  "devDependencies": {
+    "svelte": "^4.0.0",
+    "typescript": "^5.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zorihq/script.git",
+    "directory": "svelte"
+  }
+}

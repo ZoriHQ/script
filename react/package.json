@@ -1,0 +1,33 @@
+{
+  "name": "@zorihq/react",
+  "version": "1.0.0",
+  "description": "ZoriHQ Analytics for React",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "echo 'Build with your preferred bundler (rollup, tsup, etc.)'",
+    "test": "echo 'Tests not yet configured'"
+  },
+  "keywords": [
+    "analytics",
+    "react",
+    "tracking",
+    "zorihq"
+  ],
+  "author": "ZoriHQ",
+  "license": "MIT",
+  "peerDependencies": {
+    "react": ">=16.8.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "react": "^18.0.0",
+    "typescript": "^5.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zorihq/script.git",
+    "directory": "react"
+  }
+}
