@@ -1,0 +1,34 @@
+{
+  "name": "@zorihq/types",
+  "version": "1.0.0",
+  "description": "Shared TypeScript types for ZoriHQ Analytics SDKs",
+  "main": "types.ts",
+  "types": "types.ts",
+  "exports": {
+    ".": {
+      "import": "./types.ts",
+      "require": "./types.ts",
+      "types": "./types.ts"
+    }
+  },
+  "files": [
+    "types.ts",
+    "package.json"
+  ],
+  "scripts": {
+    "prepublishOnly": "echo 'Publishing source files'"
+  },
+  "keywords": [
+    "analytics",
+    "types",
+    "typescript",
+    "zorihq"
+  ],
+  "author": "ZoriHQ",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zorihq/script.git",
+    "directory": "shared"
+  }
+}

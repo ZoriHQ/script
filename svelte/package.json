@@ -1,0 +1,52 @@
+{
+  "name": "@zorihq/svelte",
+  "version": "1.0.0",
+  "description": "ZoriHQ Analytics for Svelte",
+  "main": "index.ts",
+  "svelte": "index.ts",
+  "types": "index.ts",
+  "exports": {
+    ".": {
+      "import": "./index.ts",
+      "require": "./index.ts",
+      "types": "./index.ts",
+      "svelte": "./index.ts"
+    },
+    "./ZoriProvider.svelte": "./ZoriProvider.svelte"
+  },
+  "files": [
+    "index.ts",
+    "ZoriProvider.svelte",
+    "README.md",
+    "package.json"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "echo 'Publishing source files'",
+    "test": "echo 'Tests not yet configured'"
+  },
+  "keywords": [
+    "analytics",
+    "svelte",
+    "sveltekit",
+    "tracking",
+    "zorihq"
+  ],
+  "author": "ZoriHQ",
+  "license": "MIT",
+  "peerDependencies": {
+    "svelte": ">=3.0.0"
+  },
+  "dependencies": {
+    "@zorihq/types": "^1.0.0"
+  },
+  "devDependencies": {
+    "svelte": "^4.0.0",
+    "typescript": "^5.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zorihq/script.git",
+    "directory": "svelte"
+  }
+}
