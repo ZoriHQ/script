@@ -1,36 +1,14 @@
 import { writable, readonly, derived, get, type Readable, type Writable } from 'svelte/store';
 import { onMount, onDestroy } from 'svelte';
+import type { ZoriConfig, ConsentPreferences, UserInfo, ZoriCoreAPI } from '@zorihq/types';
 
-// Types
-export interface ZoriConfig {
-  publishableKey: string;
-  baseUrl?: string;
-  comebackThreshold?: number;
-  trackQuickSwitches?: boolean;
-}
+// Re-export shared types for convenience
+export type { ZoriConfig, ConsentPreferences, UserInfo } from '@zorihq/types';
 
-export interface ConsentPreferences {
-  analytics?: boolean;
-  marketing?: boolean;
-}
-
-export interface UserInfo {
-  app_id?: string;
-  email?: string;
-  fullname?: string;
-  full_name?: string;
-  [key: string]: any;
-}
-
-export interface ZoriStore {
+// Svelte-specific store type extending core API with reactive state
+export interface ZoriStore extends Omit<ZoriCoreAPI, 'getSessionId'> {
   isInitialized: Readable<boolean>;
-  track: (eventName: string, properties?: Record<string, any>) => Promise<boolean>;
-  identify: (userInfo: UserInfo) => Promise<boolean>;
-  getVisitorId: () => Promise<string>;
   getSessionId: () => string | null;
-  setConsent: (preferences: ConsentPreferences) => boolean;
-  optOut: () => boolean;
-  hasConsent: () => boolean;
 }
 
 // Create the Zori store
