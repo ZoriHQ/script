@@ -1,0 +1,154 @@
+name: Publish Framework Packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Package to publish (react, nextjs, nextjs-server, vue, svelte, or all)'
+        required: true
+        type: choice
+        options:
+          - all
+          - react
+          - nextjs
+          - nextjs-server
+          - vue
+          - svelte
+      version:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      dry-run:
+        description: 'Dry run (do not publish)'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: ${{ github.event.inputs.package == 'all' && fromJSON('["react", "nextjs", "nextjs-server", "vue", "svelte"]') || fromJSON(format('["{0}"]', github.event.inputs.package)) }}
+
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 10
+          run_install: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install root dependencies
+        run: pnpm install --frozen-lockfile || pnpm install
+
+      - name: Install package dependencies
+        working-directory: ./${{ matrix.package }}
+        run: pnpm install || npm install
+
+      - name: Verify package files
+        working-directory: ./${{ matrix.package }}
+        run: |
+          echo "📦 Package contents:"
+          ls -la
+
+          echo ""
+          echo "📄 Files to be published:"
+          npm pack --dry-run 2>&1 | grep -A 100 "package:"
+
+      - name: Bump version
+        working-directory: ./${{ matrix.package }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Get current version
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Current version: $CURRENT_VERSION"
+
+          # Bump version
+          npm version ${{ github.event.inputs.version }} --no-git-tag-version
+
+          # Get new version
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "New version: $NEW_VERSION"
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+
+      - name: Verify version update
+        working-directory: ./${{ matrix.package }}
+        run: |
+          echo "✅ Version updated to: ${{ env.NEW_VERSION }}"
+          cat package.json | grep version
+
+      - name: Publish to npm (Dry Run)
+        if: github.event.inputs.dry-run == 'true'
+        working-directory: ./${{ matrix.package }}
+        run: |
+          echo "🔍 Dry run mode - would publish:"
+          npm pack --dry-run
+          ls -la
+
+      - name: Publish to npm
+        if: github.event.inputs.dry-run != 'true'
+        working-directory: ./${{ matrix.package }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          # Publish from root directory (includes source files)
+          npm publish --access public
+
+      - name: Commit version bump
+        if: github.event.inputs.dry-run != 'true'
+        run: |
+          git add ${{ matrix.package }}/package.json
+          git commit -m "chore(${{ matrix.package }}): release v${{ env.NEW_VERSION }}" || echo "No changes to commit"
+          git push origin ${{ github.ref_name }} || echo "Nothing to push"
+
+      - name: Create git tag
+        if: github.event.inputs.dry-run != 'true'
+        run: |
+          TAG_NAME="${{ matrix.package }}/v${{ env.NEW_VERSION }}"
+          git tag -a "$TAG_NAME" -m "Release ${{ matrix.package }} v${{ env.NEW_VERSION }}"
+          git push origin "$TAG_NAME"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release
+        if: github.event.inputs.dry-run != 'true'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ matrix.package }}/v${{ env.NEW_VERSION }}
+          release_name: ${{ matrix.package }} v${{ env.NEW_VERSION }}
+          body: |
+            Release of @zorihq/${{ matrix.package }} v${{ env.NEW_VERSION }}
+
+            ## Installation
+            ```bash
+            npm install @zorihq/${{ matrix.package }}@${{ env.NEW_VERSION }}
+            ```
+
+            See the [README](${{ github.server_url }}/${{ github.repository }}/tree/main/${{ matrix.package }}/README.md) for usage instructions.
+          draft: false
+          prerelease: false

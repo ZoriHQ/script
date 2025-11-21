@@ -2,11 +2,23 @@
   "name": "@zorihq/vue",
   "version": "1.0.0",
   "description": "ZoriHQ Analytics for Vue.js",
-  "main": "dist/index.js",
-  "module": "dist/index.esm.js",
-  "types": "dist/index.d.ts",
+  "main": "index.ts",
+  "types": "index.ts",
+  "exports": {
+    ".": {
+      "import": "./index.ts",
+      "require": "./index.ts",
+      "types": "./index.ts"
+    }
+  },
+  "files": [
+    "index.ts",
+    "README.md",
+    "package.json"
+  ],
   "scripts": {
-    "build": "echo 'Build with your preferred bundler (rollup, tsup, etc.)'",
+    "build": "tsc",
+    "prepublishOnly": "echo 'Publishing source files'",
     "test": "echo 'Tests not yet configured'"
   },
   "keywords": [

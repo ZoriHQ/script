@@ -2,11 +2,23 @@
   "name": "@zorihq/react",
   "version": "1.0.0",
   "description": "ZoriHQ Analytics for React",
-  "main": "dist/index.js",
-  "module": "dist/index.esm.js",
-  "types": "dist/index.d.ts",
+  "main": "index.tsx",
+  "types": "index.tsx",
+  "exports": {
+    ".": {
+      "import": "./index.tsx",
+      "require": "./index.tsx",
+      "types": "./index.tsx"
+    }
+  },
+  "files": [
+    "index.tsx",
+    "README.md",
+    "package.json"
+  ],
   "scripts": {
-    "build": "echo 'Build with your preferred bundler (rollup, tsup, etc.)'",
+    "build": "tsc",
+    "prepublishOnly": "echo 'Publishing source files'",
     "test": "echo 'Tests not yet configured'"
   },
   "keywords": [

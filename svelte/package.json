@@ -2,12 +2,27 @@
   "name": "@zorihq/svelte",
   "version": "1.0.0",
   "description": "ZoriHQ Analytics for Svelte",
-  "main": "dist/index.js",
-  "module": "dist/index.esm.js",
-  "types": "dist/index.d.ts",
-  "svelte": "index.js",
+  "main": "index.ts",
+  "svelte": "index.ts",
+  "types": "index.ts",
+  "exports": {
+    ".": {
+      "import": "./index.ts",
+      "require": "./index.ts",
+      "types": "./index.ts",
+      "svelte": "./index.ts"
+    },
+    "./ZoriProvider.svelte": "./ZoriProvider.svelte"
+  },
+  "files": [
+    "index.ts",
+    "ZoriProvider.svelte",
+    "README.md",
+    "package.json"
+  ],
   "scripts": {
-    "build": "echo 'Build with your preferred bundler (rollup, svelte-package, etc.)'",
+    "build": "tsc",
+    "prepublishOnly": "echo 'Publishing source files'",
     "test": "echo 'Tests not yet configured'"
   },
   "keywords": [
