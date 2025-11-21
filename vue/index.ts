@@ -9,77 +9,59 @@ import {
   type App,
   type Ref,
   type InjectionKey,
-} from 'vue';
+} from "vue";
+import type {
+  ZoriConfig,
+  ConsentPreferences,
+  UserInfo,
+  ZoriCoreAPI,
+} from "@zorihq/types";
 
-// Types
-export interface ZoriConfig {
-  publishableKey: string;
-  baseUrl?: string;
-  comebackThreshold?: number;
-  trackQuickSwitches?: boolean;
-}
+export type { ZoriConfig, ConsentPreferences, UserInfo } from "@zorihq/types";
 
-export interface ConsentPreferences {
-  analytics?: boolean;
-  marketing?: boolean;
-}
-
-export interface UserInfo {
-  app_id?: string;
-  email?: string;
-  fullname?: string;
-  full_name?: string;
-  [key: string]: any;
-}
-
-export interface ZoriInstance {
+export interface ZoriInstance extends Omit<ZoriCoreAPI, "getSessionId"> {
   isInitialized: Readonly<Ref<boolean>>;
-  track: (eventName: string, properties?: Record<string, any>) => Promise<boolean>;
-  identify: (userInfo: UserInfo) => Promise<boolean>;
-  getVisitorId: () => Promise<string>;
   getSessionId: () => string | null;
-  setConsent: (preferences: ConsentPreferences) => boolean;
-  optOut: () => boolean;
-  hasConsent: () => boolean;
 }
 
-// Injection Key
-export const ZoriKey: InjectionKey<ZoriInstance> = Symbol('zori');
+export const ZoriKey: InjectionKey<ZoriInstance> = Symbol("zori");
 
-// Plugin Options
 export interface ZoriPluginOptions {
   config: ZoriConfig;
-  router?: any; // Vue Router instance
+  router?: any;
   autoTrackPageViews?: boolean;
 }
 
-// Create Zori Instance
 function createZoriInstance(config: ZoriConfig): ZoriInstance {
   const isInitialized = ref(false);
   let scriptLoaded = false;
 
   const loadScript = () => {
-    if (scriptLoaded || typeof window === 'undefined') return;
+    if (scriptLoaded || typeof window === "undefined") return;
 
-    // Initialize queue
     (window as any).ZoriHQ = (window as any).ZoriHQ || [];
 
-    // Load script
-    const script = document.createElement('script');
-    script.src = 'https://cdn.zorihq.com/script.min.js';
+    const script = document.createElement("script");
+    script.src = "https://cdn.zorihq.com/script.min.js";
     script.async = true;
-    script.setAttribute('data-key', config.publishableKey);
+    script.setAttribute("data-key", config.publishableKey);
 
     if (config.baseUrl) {
-      script.setAttribute('data-base-url', config.baseUrl);
+      script.setAttribute("data-base-url", config.baseUrl);
     }
 
     if (config.comebackThreshold !== undefined) {
-      script.setAttribute('data-comeback-threshold', config.comebackThreshold.toString());
+      script.setAttribute(
+        "data-comeback-threshold",
+        config.comebackThreshold.toString(),
+      );
     }
 
     if (config.trackQuickSwitches !== undefined) {
-      script.setAttribute('data-track-quick-switches', config.trackQuickSwitches.toString());
+      script.setAttribute(
+        "data-track-quick-switches",
+        config.trackQuickSwitches.toString(),
+      );
     }
 
     script.onload = () => {
@@ -90,14 +72,17 @@ function createZoriInstance(config: ZoriConfig): ZoriInstance {
     scriptLoaded = true;
   };
 
-  const track = async (eventName: string, properties?: Record<string, any>): Promise<boolean> => {
+  const track = async (
+    eventName: string,
+    properties?: Record<string, any>,
+  ): Promise<boolean> => {
     const zori = (window as any).ZoriHQ;
     if (!zori) return false;
 
-    if (typeof zori.track === 'function') {
+    if (typeof zori.track === "function") {
       return await zori.track(eventName, properties);
     } else {
-      zori.push(['track', eventName, properties]);
+      zori.push(["track", eventName, properties]);
       return true;
     }
   };
@@ -106,30 +91,30 @@ function createZoriInstance(config: ZoriConfig): ZoriInstance {
     const zori = (window as any).ZoriHQ;
     if (!zori) return false;
 
-    if (typeof zori.identify === 'function') {
+    if (typeof zori.identify === "function") {
       return await zori.identify(userInfo);
     } else {
-      zori.push(['identify', userInfo]);
+      zori.push(["identify", userInfo]);
       return true;
     }
   };
 
   const getVisitorId = async (): Promise<string> => {
     const zori = (window as any).ZoriHQ;
-    if (!zori) return '';
+    if (!zori) return "";
 
-    if (typeof zori.getVisitorId === 'function') {
+    if (typeof zori.getVisitorId === "function") {
       return await zori.getVisitorId();
     }
 
     return new Promise<string>((resolve) => {
-      zori.push(['getVisitorId', (id: string) => resolve(id)]);
+      zori.push(["getVisitorId", (id: string) => resolve(id)]);
     });
   };
 
   const getSessionId = (): string | null => {
     const zori = (window as any).ZoriHQ;
-    if (!zori || typeof zori.getSessionId !== 'function') return null;
+    if (!zori || typeof zori.getSessionId !== "function") return null;
     return zori.getSessionId();
   };
 
@@ -137,10 +122,10 @@ function createZoriInstance(config: ZoriConfig): ZoriInstance {
     const zori = (window as any).ZoriHQ;
     if (!zori) return false;
 
-    if (typeof zori.setConsent === 'function') {
+    if (typeof zori.setConsent === "function") {
       return zori.setConsent(preferences);
     } else {
-      zori.push(['setConsent', preferences]);
+      zori.push(["setConsent", preferences]);
       return true;
     }
   };
@@ -149,22 +134,21 @@ function createZoriInstance(config: ZoriConfig): ZoriInstance {
     const zori = (window as any).ZoriHQ;
     if (!zori) return false;
 
-    if (typeof zori.optOut === 'function') {
+    if (typeof zori.optOut === "function") {
       return zori.optOut();
     } else {
-      zori.push(['optOut']);
+      zori.push(["optOut"]);
       return true;
     }
   };
 
   const hasConsent = (): boolean => {
     const zori = (window as any).ZoriHQ;
-    if (!zori || typeof zori.hasConsent !== 'function') return true;
+    if (!zori || typeof zori.hasConsent !== "function") return true;
     return zori.hasConsent();
   };
 
-  // Load script immediately
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     loadScript();
   }
 
@@ -180,21 +164,19 @@ function createZoriInstance(config: ZoriConfig): ZoriInstance {
   };
 }
 
-// Vue Plugin
 export const ZoriPlugin = {
   install(app: App, options: ZoriPluginOptions) {
     const zoriInstance = createZoriInstance(options.config);
     app.provide(ZoriKey, zoriInstance);
 
-    // Auto-track page views with Vue Router
     if (options.router && options.autoTrackPageViews !== false) {
       options.router.afterEach((to: any) => {
         if (zoriInstance.isInitialized.value) {
-          zoriInstance.track('page_view', {
+          zoriInstance.track("page_view", {
             page_title: document.title,
             page_path: to.path,
             page_name: to.name,
-            page_search: to.query ? JSON.stringify(to.query) : '',
+            page_search: to.query ? JSON.stringify(to.query) : "",
           });
         }
       });
@@ -202,23 +184,28 @@ export const ZoriPlugin = {
   },
 };
 
-// Composable: useZori
 export function useZori(): ZoriInstance {
   const zori = inject(ZoriKey);
   if (!zori) {
-    throw new Error('useZori must be used within a component with ZoriPlugin installed');
+    throw new Error(
+      "useZori must be used within a component with ZoriPlugin installed",
+    );
   }
   return zori;
 }
 
-// Composable: usePageView
-export function usePageView(properties?: Ref<Record<string, any>> | Record<string, any>) {
+export function usePageView(
+  properties?: Ref<Record<string, any>> | Record<string, any>,
+) {
   const { track, isInitialized } = useZori();
 
   onMounted(() => {
     if (isInitialized.value) {
-      const props = typeof properties === 'object' && 'value' in properties ? properties.value : properties;
-      track('page_view', {
+      const props =
+        typeof properties === "object" && "value" in properties
+          ? properties.value
+          : properties;
+      track("page_view", {
         page_title: document.title,
         page_path: window.location.pathname,
         page_search: window.location.search,
@@ -228,13 +215,12 @@ export function usePageView(properties?: Ref<Record<string, any>> | Record<strin
     }
   });
 
-  // Watch for changes if properties is a ref
-  if (properties && typeof properties === 'object' && 'value' in properties) {
+  if (properties && typeof properties === "object" && "value" in properties) {
     watch(
       properties,
       (newProps) => {
         if (isInitialized.value) {
-          track('page_view', {
+          track("page_view", {
             page_title: document.title,
             page_path: window.location.pathname,
             page_search: window.location.search,
@@ -243,54 +229,58 @@ export function usePageView(properties?: Ref<Record<string, any>> | Record<strin
           });
         }
       },
-      { deep: true }
+      { deep: true },
     );
   }
 }
 
-// Composable: useTrackEvent
 export function useTrackEvent(
   eventName: string | Ref<string>,
-  properties?: Ref<Record<string, any>> | Record<string, any>
+  properties?: Ref<Record<string, any>> | Record<string, any>,
 ) {
   const { track, isInitialized } = useZori();
 
   onMounted(() => {
     if (isInitialized.value) {
-      const name = typeof eventName === 'string' ? eventName : eventName.value;
-      const props = typeof properties === 'object' && 'value' in properties ? properties.value : properties;
+      const name = typeof eventName === "string" ? eventName : eventName.value;
+      const props =
+        typeof properties === "object" && "value" in properties
+          ? properties.value
+          : properties;
       track(name, props);
     }
   });
 
-  // Watch for changes
   watch(
     [
-      typeof eventName === 'string' ? ref(eventName) : eventName,
-      typeof properties === 'object' && 'value' in properties ? properties : ref(properties),
+      typeof eventName === "string" ? ref(eventName) : eventName,
+      typeof properties === "object" && "value" in properties
+        ? properties
+        : ref(properties),
     ],
     ([newName, newProps]) => {
       if (isInitialized.value) {
         track(newName as string, newProps as Record<string, any>);
       }
     },
-    { deep: true }
+    { deep: true },
   );
 }
 
-// Composable: useIdentify
-export function useIdentify(userInfo: Ref<UserInfo | null> | UserInfo | null) {
+export function useIdentify(userInfo: Ref<UserInfo> | UserInfo) {
   const { identify, isInitialized } = useZori();
 
   onMounted(() => {
-    const info = typeof userInfo === 'object' && 'value' in userInfo ? userInfo.value : userInfo;
+    const info =
+      typeof userInfo === "object" && "value" in userInfo
+        ? userInfo.value
+        : userInfo;
     if (isInitialized.value && info) {
       identify(info);
     }
   });
 
-  // Watch for changes if userInfo is a ref
-  if (userInfo && typeof userInfo === 'object' && 'value' in userInfo) {
+  if (userInfo && typeof userInfo === "object" && "value" in userInfo) {
     watch(
       userInfo,
       (newInfo) => {
@@ -298,12 +288,11 @@ export function useIdentify(userInfo: Ref<UserInfo | null> | UserInfo | null) {
           identify(newInfo);
         }
       },
-      { deep: true }
+      { deep: true },
     );
   }
 }
 
-// Export default
 export default {
   ZoriPlugin,
   useZori,

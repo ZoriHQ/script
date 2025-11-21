@@ -32,6 +32,9 @@
   "peerDependencies": {
     "react": ">=16.8.0"
   },
+  "dependencies": {
+    "@zorihq/types": "^1.0.0"
+  },
   "devDependencies": {
     "@types/react": "^18.0.0",
     "react": "^18.0.0",

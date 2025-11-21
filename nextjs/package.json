@@ -34,6 +34,9 @@
     "next": ">=13.0.0",
     "react": ">=18.0.0"
   },
+  "dependencies": {
+    "@zorihq/types": "^1.0.0"
+  },
   "devDependencies": {
     "@types/react": "^18.0.0",
     "next": "^14.0.0",

@@ -33,6 +33,9 @@
   "peerDependencies": {
     "vue": ">=3.0.0"
   },
+  "dependencies": {
+    "@zorihq/types": "^1.0.0"
+  },
   "devDependencies": {
     "typescript": "^5.0.0",
     "vue": "^3.0.0"

@@ -2,37 +2,14 @@
 
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
+import type { ZoriConfig, ConsentPreferences, UserInfo, ZoriCoreAPI } from '@zorihq/types';
 
-// Types
-export interface ZoriConfig {
-  publishableKey: string;
-  baseUrl?: string;
-  comebackThreshold?: number;
-  trackQuickSwitches?: boolean;
-}
+// Re-export shared types for convenience
+export type { ZoriConfig, ConsentPreferences, UserInfo } from '@zorihq/types';
 
-export interface ConsentPreferences {
-  analytics?: boolean;
-  marketing?: boolean;
-}
-
-export interface UserInfo {
-  app_id?: string;
-  email?: string;
-  fullname?: string;
-  full_name?: string;
-  [key: string]: any;
-}
-
-export interface ZoriContextType {
+// Next.js-specific context type extending core API
+export interface ZoriContextType extends ZoriCoreAPI {
   isInitialized: boolean;
-  track: (eventName: string, properties?: Record<string, any>) => Promise<boolean>;
-  identify: (userInfo: UserInfo) => Promise<boolean>;
-  getVisitorId: () => Promise<string>;
-  getSessionId: () => string | null;
-  setConsent: (preferences: ConsentPreferences) => boolean;
-  optOut: () => boolean;
-  hasConsent: () => boolean;
 }
 
 // Context
