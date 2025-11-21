@@ -1,3 +1,11 @@
+## [1.3.0](https://github.com/zorihq/script/compare/v1.2.10...v1.3.0) (2025-11-21)
+
+
+### 🚀 Features
+
+* add framework-specific libraries for React, Next.js, Vue, and Svelte ([e965c16](https://github.com/zorihq/script/commit/e965c169dbe94505fa2d6e27d0aa9a2da260b87d))
+* add npm publishing workflow and build configurations ([3df93b0](https://github.com/zorihq/script/commit/3df93b08afa745cf1038d51d22507f3bb8f52ada))
+
 ## [1.2.10](https://github.com/zorihq/script/compare/v1.2.9...v1.2.10) (2025-11-02)
 
 
