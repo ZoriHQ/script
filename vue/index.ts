@@ -15,9 +15,12 @@ import type {
   ConsentPreferences,
   UserInfo,
   ZoriCoreAPI,
+  ScrollHeatmapData,
+  RecordingStatus,
+  RecordingOptions,
 } from "@zorihq/types";
 
-export type { ZoriConfig, ConsentPreferences, UserInfo } from "@zorihq/types";
+export type { ZoriConfig, ConsentPreferences, UserInfo, ScrollHeatmapData, RecordingStatus, RecordingOptions } from "@zorihq/types";
 
 export interface ZoriInstance extends Omit<ZoriCoreAPI, "getSessionId"> {
   isInitialized: Readonly<Ref<boolean>>;
@@ -62,6 +65,38 @@ function createZoriInstance(config: ZoriConfig): ZoriInstance {
         "data-track-quick-switches",
         config.trackQuickSwitches.toString(),
       );
+    }
+
+    if (config.trackScrollDepth !== undefined) {
+      script.setAttribute(
+        "data-track-scroll-depth",
+        config.trackScrollDepth.toString(),
+      );
+    }
+
+    if (config.scrollThrottleMs !== undefined) {
+      script.setAttribute(
+        "data-scroll-throttle-ms",
+        config.scrollThrottleMs.toString(),
+      );
+    }
+
+    if (config.scrollDepthIntervals !== undefined) {
+      script.setAttribute(
+        "data-scroll-depth-intervals",
+        JSON.stringify(config.scrollDepthIntervals),
+      );
+    }
+
+    if (config.enableSessionRecording !== undefined) {
+      script.setAttribute(
+        "data-enable-session-recording",
+        config.enableSessionRecording.toString(),
+      );
+    }
+
+    if (config.rrwebCdnUrl !== undefined) {
+      script.setAttribute("data-rrweb-cdn-url", config.rrwebCdnUrl);
     }
 
     script.onload = () => {
@@ -148,6 +183,44 @@ function createZoriInstance(config: ZoriConfig): ZoriInstance {
     return zori.hasConsent();
   };
 
+  const getScrollData = (): ScrollHeatmapData | null => {
+    const zori = (window as any).ZoriHQ;
+    if (!zori || typeof zori.getScrollData !== "function") return null;
+    return zori.getScrollData();
+  };
+
+  const startRecording = async (options?: RecordingOptions): Promise<boolean> => {
+    const zori = (window as any).ZoriHQ;
+    if (!zori) return false;
+
+    if (typeof zori.startRecording === "function") {
+      return await zori.startRecording(options);
+    } else {
+      zori.push(["startRecording", options]);
+      return true;
+    }
+  };
+
+  const stopRecording = (): boolean => {
+    const zori = (window as any).ZoriHQ;
+    if (!zori) return false;
+
+    if (typeof zori.stopRecording === "function") {
+      return zori.stopRecording();
+    } else {
+      zori.push(["stopRecording"]);
+      return true;
+    }
+  };
+
+  const getRecordingStatus = (): RecordingStatus => {
+    const zori = (window as any).ZoriHQ;
+    if (!zori || typeof zori.getRecordingStatus !== "function") {
+      return { isRecording: false, eventCount: 0, rrwebLoaded: false };
+    }
+    return zori.getRecordingStatus();
+  };
+
   if (typeof window !== "undefined") {
     loadScript();
   }
@@ -161,6 +234,10 @@ function createZoriInstance(config: ZoriConfig): ZoriInstance {
     setConsent,
     optOut,
     hasConsent,
+    getScrollData,
+    startRecording,
+    stopRecording,
+    getRecordingStatus,
   };
 }
 
@@ -293,10 +370,90 @@ export function useIdentify(userInfo: Ref<UserInfo> | UserInfo) {
   }
 }
 
+export function useScrollData() {
+  const { getScrollData, isInitialized } = useZori();
+  const scrollData = ref<ScrollHeatmapData | null>(null);
+  let intervalId: ReturnType<typeof setInterval> | null = null;
+
+  onMounted(() => {
+    if (isInitialized.value) {
+      scrollData.value = getScrollData();
+    }
+
+    // Update periodically
+    intervalId = setInterval(() => {
+      if (isInitialized.value) {
+        scrollData.value = getScrollData();
+      }
+    }, 1000);
+  });
+
+  onUnmounted(() => {
+    if (intervalId) {
+      clearInterval(intervalId);
+    }
+  });
+
+  watch(isInitialized, (initialized) => {
+    if (initialized) {
+      scrollData.value = getScrollData();
+    }
+  });
+
+  return readonly(scrollData);
+}
+
+export function useSessionRecording() {
+  const { startRecording, stopRecording, getRecordingStatus, isInitialized } = useZori();
+  const status = ref<RecordingStatus>({
+    isRecording: false,
+    eventCount: 0,
+    rrwebLoaded: false,
+  });
+  let intervalId: ReturnType<typeof setInterval> | null = null;
+
+  onMounted(() => {
+    // Update status periodically
+    intervalId = setInterval(() => {
+      if (isInitialized.value) {
+        status.value = getRecordingStatus();
+      }
+    }, 1000);
+  });
+
+  onUnmounted(() => {
+    if (intervalId) {
+      clearInterval(intervalId);
+    }
+  });
+
+  const start = async (options?: RecordingOptions) => {
+    const result = await startRecording(options);
+    if (result) {
+      status.value = getRecordingStatus();
+    }
+    return result;
+  };
+
+  const stop = () => {
+    const result = stopRecording();
+    status.value = getRecordingStatus();
+    return result;
+  };
+
+  return {
+    status: readonly(status),
+    start,
+    stop,
+  };
+}
+
 export default {
   ZoriPlugin,
   useZori,
   usePageView,
   useTrackEvent,
   useIdentify,
+  useScrollData,
+  useSessionRecording,
 };

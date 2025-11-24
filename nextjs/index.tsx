@@ -2,10 +2,10 @@
 
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
-import type { ZoriConfig, ConsentPreferences, UserInfo, ZoriCoreAPI } from '@zorihq/types';
+import type { ZoriConfig, ConsentPreferences, UserInfo, ZoriCoreAPI, ScrollHeatmapData, RecordingStatus, RecordingOptions } from '@zorihq/types';
 
 // Re-export shared types for convenience
-export type { ZoriConfig, ConsentPreferences, UserInfo } from '@zorihq/types';
+export type { ZoriConfig, ConsentPreferences, UserInfo, ScrollHeatmapData, RecordingStatus, RecordingOptions } from '@zorihq/types';
 
 // Next.js-specific context type extending core API
 export interface ZoriContextType extends ZoriCoreAPI {
@@ -55,6 +55,26 @@ export const ZoriProvider: React.FC<ZoriProviderProps> = ({
 
     if (config.trackQuickSwitches !== undefined) {
       script.setAttribute('data-track-quick-switches', config.trackQuickSwitches.toString());
+    }
+
+    if (config.trackScrollDepth !== undefined) {
+      script.setAttribute('data-track-scroll-depth', config.trackScrollDepth.toString());
+    }
+
+    if (config.scrollThrottleMs !== undefined) {
+      script.setAttribute('data-scroll-throttle-ms', config.scrollThrottleMs.toString());
+    }
+
+    if (config.scrollDepthIntervals !== undefined) {
+      script.setAttribute('data-scroll-depth-intervals', JSON.stringify(config.scrollDepthIntervals));
+    }
+
+    if (config.enableSessionRecording !== undefined) {
+      script.setAttribute('data-enable-session-recording', config.enableSessionRecording.toString());
+    }
+
+    if (config.rrwebCdnUrl !== undefined) {
+      script.setAttribute('data-rrweb-cdn-url', config.rrwebCdnUrl);
     }
 
     script.onload = () => {
@@ -165,6 +185,44 @@ export const ZoriProvider: React.FC<ZoriProviderProps> = ({
     return zori.hasConsent();
   }, []);
 
+  const getScrollData = useCallback((): ScrollHeatmapData | null => {
+    const zori = (window as any).ZoriHQ;
+    if (!zori || typeof zori.getScrollData !== 'function') return null;
+    return zori.getScrollData();
+  }, []);
+
+  const startRecording = useCallback(async (options?: RecordingOptions): Promise<boolean> => {
+    const zori = (window as any).ZoriHQ;
+    if (!zori) return false;
+
+    if (typeof zori.startRecording === 'function') {
+      return await zori.startRecording(options);
+    } else {
+      zori.push(['startRecording', options]);
+      return true;
+    }
+  }, []);
+
+  const stopRecording = useCallback((): boolean => {
+    const zori = (window as any).ZoriHQ;
+    if (!zori) return false;
+
+    if (typeof zori.stopRecording === 'function') {
+      return zori.stopRecording();
+    } else {
+      zori.push(['stopRecording']);
+      return true;
+    }
+  }, []);
+
+  const getRecordingStatus = useCallback((): RecordingStatus => {
+    const zori = (window as any).ZoriHQ;
+    if (!zori || typeof zori.getRecordingStatus !== 'function') {
+      return { isRecording: false, eventCount: 0, rrwebLoaded: false };
+    }
+    return zori.getRecordingStatus();
+  }, []);
+
   const contextValue: ZoriContextType = {
     isInitialized,
     track,
@@ -174,6 +232,10 @@ export const ZoriProvider: React.FC<ZoriProviderProps> = ({
     setConsent,
     optOut,
     hasConsent,
+    getScrollData,
+    startRecording,
+    stopRecording,
+    getRecordingStatus,
   };
 
   return <ZoriContext.Provider value={contextValue}>{children}</ZoriContext.Provider>;
@@ -213,6 +275,69 @@ export const useIdentify = (userInfo: UserInfo | null) => {
       identify(userInfo);
     }
   }, [isInitialized, userInfo, identify]);
+};
+
+// Hook to get scroll heatmap data
+export const useScrollData = () => {
+  const { getScrollData, isInitialized } = useZori();
+  const [scrollData, setScrollData] = useState<ScrollHeatmapData | null>(null);
+
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    // Get initial data
+    setScrollData(getScrollData());
+
+    // Update periodically
+    const interval = setInterval(() => {
+      setScrollData(getScrollData());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isInitialized, getScrollData]);
+
+  return scrollData;
+};
+
+// Hook for session recording
+export const useSessionRecording = () => {
+  const { startRecording, stopRecording, getRecordingStatus, isInitialized } = useZori();
+  const [status, setStatus] = useState<RecordingStatus>({
+    isRecording: false,
+    eventCount: 0,
+    rrwebLoaded: false,
+  });
+
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    // Update status periodically while recording
+    const interval = setInterval(() => {
+      setStatus(getRecordingStatus());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isInitialized, getRecordingStatus]);
+
+  const start = useCallback(async (options?: RecordingOptions) => {
+    const result = await startRecording(options);
+    if (result) {
+      setStatus(getRecordingStatus());
+    }
+    return result;
+  }, [startRecording, getRecordingStatus]);
+
+  const stop = useCallback(() => {
+    const result = stopRecording();
+    setStatus(getRecordingStatus());
+    return result;
+  }, [stopRecording, getRecordingStatus]);
+
+  return {
+    ...status,
+    start,
+    stop,
+  };
 };
 
 // Component to track clicks
@@ -255,5 +380,7 @@ export default {
   useZori,
   useTrackEvent,
   useIdentify,
+  useScrollData,
+  useSessionRecording,
   TrackClick,
 };
