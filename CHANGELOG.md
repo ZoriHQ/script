@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/zorihq/script/compare/v1.3.0...v1.3.1) (2025-12-07)
+
+
+### 🐛 Bug Fixes
+
+* **react:** Remove autoTrackPageViews from ZoriProvider ([fb78bba](https://github.com/zorihq/script/commit/fb78bba9fa177f5314a87da097bbe62d29584009))
+
 ## [1.3.0](https://github.com/zorihq/script/compare/v1.2.10...v1.3.0) (2025-11-21)
 
 
