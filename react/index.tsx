@@ -16,14 +16,12 @@ const ZoriContext = createContext<ZoriContextType | null>(null);
 export interface ZoriProviderProps {
   config: ZoriConfig;
   children: React.ReactNode;
-  autoTrackPageViews?: boolean;
 }
 
 // Provider Component
 export const ZoriProvider: React.FC<ZoriProviderProps> = ({
   config,
   children,
-  autoTrackPageViews = true,
 }) => {
   const [isInitialized, setIsInitialized] = useState(false);
   const scriptLoadedRef = useRef(false);
