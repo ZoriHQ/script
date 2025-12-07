@@ -1,6 +1,6 @@
 {
   "name": "@zorihq/react",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "ZoriHQ Analytics for React",
   "main": "index.tsx",
   "types": "index.tsx",
