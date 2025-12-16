@@ -1,3 +1,10 @@
+## [1.4.0](https://github.com/zorihq/script/compare/v1.3.1...v1.4.0) (2025-12-16)
+
+
+### 🚀 Features
+
+* **astro:** Add ZoriHQ Analytics package for Astro ([faa0b56](https://github.com/zorihq/script/commit/faa0b56bb30e7f0e872780ec6e79c5d602496793))
+
 ## [1.3.1](https://github.com/zorihq/script/compare/v1.3.0...v1.3.1) (2025-12-07)
 
 
