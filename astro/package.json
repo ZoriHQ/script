@@ -1,0 +1,49 @@
+{
+  "name": "@zorihq/astro",
+  "version": "1.0.0",
+  "description": "ZoriHQ Analytics for Astro",
+  "main": "index.ts",
+  "types": "index.ts",
+  "exports": {
+    ".": {
+      "import": "./index.ts",
+      "require": "./index.ts",
+      "types": "./index.ts"
+    },
+    "./ZoriScript.astro": "./ZoriScript.astro"
+  },
+  "files": [
+    "index.ts",
+    "ZoriScript.astro",
+    "README.md",
+    "package.json"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "echo 'Publishing source files'",
+    "test": "echo 'Tests not yet configured'"
+  },
+  "keywords": [
+    "analytics",
+    "astro",
+    "tracking",
+    "zorihq"
+  ],
+  "author": "ZoriHQ",
+  "license": "MIT",
+  "peerDependencies": {
+    "astro": ">=3.0.0"
+  },
+  "dependencies": {
+    "@zorihq/types": "^1.0.0"
+  },
+  "devDependencies": {
+    "astro": "^4.0.0",
+    "typescript": "^5.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zorihq/script.git",
+    "directory": "astro"
+  }
+}
