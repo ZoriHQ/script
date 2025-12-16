@@ -1,0 +1,87 @@
+---
+/**
+ * ZoriScript - Astro component for ZoriHQ Analytics
+ *
+ * This component injects the ZoriHQ tracking script and optionally
+ * tracks page views automatically, including support for View Transitions.
+ */
+
+export interface Props {
+  /** Your ZoriHQ publishable key */
+  publishableKey: string;
+  /** Custom API base URL (optional) */
+  baseUrl?: string;
+  /** Threshold in ms for detecting user comebacks (optional) */
+  comebackThreshold?: number;
+  /** Whether to track quick tab switches (optional) */
+  trackQuickSwitches?: boolean;
+  /** Whether to auto-track page views (default: true) */
+  autoTrackPageViews?: boolean;
+}
+
+const {
+  publishableKey,
+  baseUrl,
+  comebackThreshold,
+  trackQuickSwitches,
+  autoTrackPageViews = true,
+} = Astro.props;
+---
+
+<script
+  src="https://cdn.zorihq.com/script.min.js"
+  data-key={publishableKey}
+  data-base-url={baseUrl}
+  data-comeback-threshold={comebackThreshold?.toString()}
+  data-track-quick-switches={trackQuickSwitches?.toString()}
+  async
+></script>
+
+{autoTrackPageViews && (
+  <script define:vars={{ autoTrackPageViews }}>
+    // Initialize queue
+    window.ZoriHQ = window.ZoriHQ || [];
+
+    // Track page view helper
+    function trackPageView() {
+      const zori = window.ZoriHQ;
+      if (!zori) return;
+
+      const properties = {
+        page_title: document.title,
+        page_path: window.location.pathname,
+        page_search: window.location.search,
+        page_hash: window.location.hash,
+      };
+
+      if (typeof zori.track === 'function') {
+        zori.track('page_view', properties);
+      } else {
+        zori.push(['track', 'page_view', properties]);
+      }
+    }
+
+    // Track initial page view once script is loaded
+    if (document.readyState === 'complete') {
+      trackPageView();
+    } else {
+      window.addEventListener('load', trackPageView, { once: true });
+    }
+
+    // Support Astro View Transitions
+    document.addEventListener('astro:page-load', () => {
+      // Skip first load as it's handled above
+      if (!window.__zoriInitialPageTracked) {
+        window.__zoriInitialPageTracked = true;
+        return;
+      }
+      trackPageView();
+    });
+
+    // Also support astro:after-swap for immediate tracking
+    document.addEventListener('astro:after-swap', () => {
+      // Update page title tracking after swap completes
+      setTimeout(trackPageView, 0);
+    });
+  </script>
+)}
