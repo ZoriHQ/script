@@ -10,6 +10,11 @@
   const DEFAULT_API_URL = "https://ingestion.zorihq.com/ingest";
   const DEFAULT_COMEBACK_THRESHOLD_MS = 30 * 1000; // 30 seconds
   const DEFAULT_TRACK_QUICK_SWITCHES = false;
+  const DEFAULT_SCROLL_TRACKING = true;
+  const DEFAULT_SCROLL_THROTTLE_MS = 250;
+  const DEFAULT_SCROLL_DEPTH_INTERVALS = [25, 50, 75, 90, 100];
+  const DEFAULT_SESSION_RECORDING = false;
+  const RRWEB_CDN_URL = "https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.js";
 
   let consentState = {
     analytics: null, // null = not set, true = granted, false = denied
@@ -30,6 +35,30 @@
     trackQuickSwitches:
       scriptTag?.getAttribute("data-track-quick-switches") === "true" ||
       DEFAULT_TRACK_QUICK_SWITCHES,
+    // Scroll tracking configuration
+    trackScrollDepth:
+      scriptTag?.getAttribute("data-track-scroll-depth") !== "false" &&
+      DEFAULT_SCROLL_TRACKING,
+    scrollThrottleMs:
+      parseInt(scriptTag?.getAttribute("data-scroll-throttle-ms")) ||
+      DEFAULT_SCROLL_THROTTLE_MS,
+    scrollDepthIntervals: (() => {
+      const attr = scriptTag?.getAttribute("data-scroll-depth-intervals");
+      if (attr) {
+        try {
+          return JSON.parse(attr);
+        } catch (e) {
+          return DEFAULT_SCROLL_DEPTH_INTERVALS;
+        }
+      }
+      return DEFAULT_SCROLL_DEPTH_INTERVALS;
+    })(),
+    // Session recording configuration
+    enableSessionRecording:
+      scriptTag?.getAttribute("data-enable-session-recording") === "true" ||
+      DEFAULT_SESSION_RECORDING,
+    rrwebCdnUrl:
+      scriptTag?.getAttribute("data-rrweb-cdn-url") || RRWEB_CDN_URL,
   };
 
   if (!config.publishableKey) {
@@ -38,6 +67,22 @@
   }
 
   let pageHiddenAt = null;
+
+  // Scroll tracking state
+  let scrollState = {
+    maxDepthPercent: 0,
+    reachedIntervals: new Set(),
+    lastScrollTime: 0,
+    scrollSnapshots: [],
+  };
+
+  // Session recording state
+  let recordingState = {
+    isRecording: false,
+    stopFn: null,
+    events: [],
+    rrwebLoaded: false,
+  };
 
   // ==================== UTILITY FUNCTIONS ====================
 
@@ -765,6 +810,293 @@
     );
   }
 
+  // ==================== SCROLL DEPTH TRACKING ====================
+
+  function getScrollMetrics() {
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const viewportHeight = window.innerHeight;
+    const documentHeight = Math.max(
+      document.body.scrollHeight,
+      document.body.offsetHeight,
+      document.documentElement.clientHeight,
+      document.documentElement.scrollHeight,
+      document.documentElement.offsetHeight
+    );
+
+    // Calculate scroll depth as percentage of total scrollable content
+    const maxScroll = documentHeight - viewportHeight;
+    const scrollPercent = maxScroll > 0 ? (scrollTop / maxScroll) * 100 : 100;
+
+    // Calculate what percentage of the document is currently visible
+    const visibleTop = (scrollTop / documentHeight) * 100;
+    const visibleBottom = ((scrollTop + viewportHeight) / documentHeight) * 100;
+
+    return {
+      // Current scroll position normalized (0-100)
+      scroll_depth_percent: Math.min(Math.round(scrollPercent), 100),
+      // Document metrics for heatmap reconstruction
+      document_height: documentHeight,
+      viewport_height: viewportHeight,
+      scroll_top: scrollTop,
+      // Normalized positions for heatmaps (relative to document)
+      visible_top_percent: Math.round(visibleTop * 100) / 100,
+      visible_bottom_percent: Math.round(visibleBottom * 100) / 100,
+      // Screen dimensions
+      screen_width: window.innerWidth,
+      screen_height: window.innerHeight,
+    };
+  }
+
+  function throttle(func, limit) {
+    let lastFunc;
+    let lastRan;
+    return function (...args) {
+      if (!lastRan) {
+        func.apply(this, args);
+        lastRan = Date.now();
+      } else {
+        clearTimeout(lastFunc);
+        lastFunc = setTimeout(
+          function () {
+            if (Date.now() - lastRan >= limit) {
+              func.apply(this, args);
+              lastRan = Date.now();
+            }
+          },
+          limit - (Date.now() - lastRan)
+        );
+      }
+    };
+  }
+
+  async function handleScrollEvent() {
+    const metrics = getScrollMetrics();
+    const currentDepth = metrics.scroll_depth_percent;
+
+    // Update max depth
+    if (currentDepth > scrollState.maxDepthPercent) {
+      scrollState.maxDepthPercent = currentDepth;
+    }
+
+    // Check for milestone intervals
+    for (const interval of config.scrollDepthIntervals) {
+      if (currentDepth >= interval && !scrollState.reachedIntervals.has(interval)) {
+        scrollState.reachedIntervals.add(interval);
+
+        await trackEvent("scroll_depth_milestone", {
+          milestone_percent: interval,
+          ...metrics,
+        });
+      }
+    }
+
+    // Store snapshot for heatmap data
+    scrollState.scrollSnapshots.push({
+      timestamp: Date.now(),
+      ...metrics,
+    });
+
+    // Keep only last 100 snapshots to prevent memory issues
+    if (scrollState.scrollSnapshots.length > 100) {
+      scrollState.scrollSnapshots = scrollState.scrollSnapshots.slice(-100);
+    }
+  }
+
+  function setupScrollTracking() {
+    if (!config.trackScrollDepth) {
+      return;
+    }
+
+    const throttledScrollHandler = throttle(
+      handleScrollEvent,
+      config.scrollThrottleMs
+    );
+
+    window.addEventListener("scroll", throttledScrollHandler, { passive: true });
+
+    // Track scroll depth on page unload
+    window.addEventListener("beforeunload", function () {
+      if (scrollState.maxDepthPercent > 0) {
+        const metrics = getScrollMetrics();
+
+        trackEvent("scroll_depth_final", {
+          max_depth_percent: scrollState.maxDepthPercent,
+          milestones_reached: Array.from(scrollState.reachedIntervals),
+          snapshot_count: scrollState.scrollSnapshots.length,
+          ...metrics,
+        });
+      }
+    });
+  }
+
+  function getScrollHeatmapData() {
+    return {
+      max_depth_percent: scrollState.maxDepthPercent,
+      milestones_reached: Array.from(scrollState.reachedIntervals),
+      snapshots: scrollState.scrollSnapshots,
+      current_metrics: getScrollMetrics(),
+    };
+  }
+
+  // ==================== SESSION RECORDING (RRWEB) ====================
+
+  function loadRRWebScript() {
+    return new Promise((resolve, reject) => {
+      if (recordingState.rrwebLoaded || window.rrweb) {
+        recordingState.rrwebLoaded = true;
+        resolve();
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.src = config.rrwebCdnUrl;
+      script.async = true;
+
+      script.onload = function () {
+        recordingState.rrwebLoaded = true;
+        console.log("[ZoriHQ] RRWeb loaded successfully");
+        resolve();
+      };
+
+      script.onerror = function () {
+        console.error("[ZoriHQ] Failed to load RRWeb script");
+        reject(new Error("Failed to load RRWeb"));
+      };
+
+      document.head.appendChild(script);
+    });
+  }
+
+  async function startSessionRecording(options = {}) {
+    if (!hasTrackingConsent()) {
+      console.log("[ZoriHQ] Session recording blocked: no consent or DNT enabled");
+      return false;
+    }
+
+    if (recordingState.isRecording) {
+      console.log("[ZoriHQ] Session recording already active");
+      return true;
+    }
+
+    try {
+      await loadRRWebScript();
+
+      if (!window.rrweb || !window.rrweb.record) {
+        console.error("[ZoriHQ] RRWeb not available");
+        return false;
+      }
+
+      const recordingOptions = {
+        emit: function (event) {
+          recordingState.events.push(event);
+
+          // Send events in batches (every 50 events or every 10 seconds)
+          if (recordingState.events.length >= 50) {
+            flushRecordingEvents();
+          }
+        },
+        // Default options - can be overridden
+        checkoutEveryNms: 10 * 60 * 1000, // Full snapshot every 10 minutes
+        blockClass: "zori-block", // Block elements with this class
+        ignoreClass: "zori-ignore", // Ignore input elements with this class
+        maskTextClass: "zori-mask", // Mask text with this class
+        maskAllInputs: true, // Mask all input values for privacy
+        maskInputOptions: {
+          password: true,
+          email: true,
+        },
+        ...options,
+      };
+
+      recordingState.stopFn = window.rrweb.record(recordingOptions);
+      recordingState.isRecording = true;
+
+      // Set up periodic flush (every 10 seconds)
+      recordingState.flushInterval = setInterval(function () {
+        if (recordingState.events.length > 0) {
+          flushRecordingEvents();
+        }
+      }, 10000);
+
+      console.log("[ZoriHQ] Session recording started");
+
+      // Track recording start event
+      await trackEvent("session_recording_started", {
+        recording_options: {
+          maskAllInputs: recordingOptions.maskAllInputs,
+        },
+      });
+
+      return true;
+    } catch (error) {
+      console.error("[ZoriHQ] Failed to start session recording:", error);
+      return false;
+    }
+  }
+
+  function stopSessionRecording() {
+    if (!recordingState.isRecording) {
+      return false;
+    }
+
+    if (recordingState.stopFn) {
+      recordingState.stopFn();
+    }
+
+    if (recordingState.flushInterval) {
+      clearInterval(recordingState.flushInterval);
+    }
+
+    // Flush remaining events
+    if (recordingState.events.length > 0) {
+      flushRecordingEvents();
+    }
+
+    recordingState.isRecording = false;
+    recordingState.stopFn = null;
+
+    console.log("[ZoriHQ] Session recording stopped");
+
+    // Track recording stop event
+    trackEvent("session_recording_stopped");
+
+    return true;
+  }
+
+  async function flushRecordingEvents() {
+    if (recordingState.events.length === 0) {
+      return;
+    }
+
+    const eventsToSend = [...recordingState.events];
+    recordingState.events = [];
+
+    const visitorId = await getOrCreateVisitorId();
+    const sessionId = getOrCreateSession();
+
+    const payload = {
+      event_name: "session_recording_events",
+      client_generated_event_id: generateEventId(),
+      visitor_id: visitorId,
+      session_id: sessionId,
+      client_timestamp_utc: new Date().toISOString(),
+      page_url: window.location.pathname,
+      host: window.location.host,
+      recording_events: eventsToSend,
+      event_count: eventsToSend.length,
+    };
+
+    await sendEvent(payload, "/recording");
+  }
+
+  function getRecordingStatus() {
+    return {
+      isRecording: recordingState.isRecording,
+      eventCount: recordingState.events.length,
+      rrwebLoaded: recordingState.rrwebLoaded,
+    };
+  }
+
   // ==================== PAGE VIEW TRACKING ====================
 
   async function trackPageView() {
@@ -813,6 +1145,22 @@
         case "optOut":
           optOut();
           break;
+        case "startRecording":
+          startSessionRecording(...args);
+          break;
+        case "stopRecording":
+          stopSessionRecording();
+          break;
+        case "getScrollData":
+          if (typeof args[0] === "function") {
+            args[0](getScrollHeatmapData());
+          }
+          break;
+        case "getRecordingStatus":
+          if (typeof args[0] === "function") {
+            args[0](getRecordingStatus());
+          }
+          break;
         default:
           console.warn(`[ZoriHQ] Unknown method: ${method}`);
       }
@@ -838,6 +1186,12 @@
         setConsent: setConsent,
         optOut: optOut,
         hasConsent: hasTrackingConsent,
+        // Scroll tracking (no-op when no consent)
+        getScrollData: () => null,
+        // Session recording (no-op when no consent)
+        startRecording: async () => false,
+        stopRecording: () => false,
+        getRecordingStatus: () => ({ isRecording: false, eventCount: 0, rrwebLoaded: false }),
         push: function (command) {
           if (Array.isArray(command)) {
             processQueuedCommands([command]);
@@ -857,6 +1211,13 @@
     await trackPageView();
 
     setupClickTracking();
+
+    setupScrollTracking();
+
+    // Auto-start session recording if enabled
+    if (config.enableSessionRecording) {
+      startSessionRecording();
+    }
 
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "hidden") {
@@ -910,6 +1271,12 @@
         const session = getSession();
         return session?.session_id || null;
       },
+      // Scroll tracking API
+      getScrollData: getScrollHeatmapData,
+      // Session recording API
+      startRecording: startSessionRecording,
+      stopRecording: stopSessionRecording,
+      getRecordingStatus: getRecordingStatus,
       push: function (command) {
         if (Array.isArray(command)) {
           processQueuedCommands([command]);

@@ -19,6 +19,16 @@ export interface ZoriConfig {
   comebackThreshold?: number;
   /** Whether to track quick tab switches (optional) */
   trackQuickSwitches?: boolean;
+  /** Whether to track scroll depth (default: true) */
+  trackScrollDepth?: boolean;
+  /** Throttle interval for scroll events in ms (default: 250) */
+  scrollThrottleMs?: number;
+  /** Scroll depth milestones to track (default: [25, 50, 75, 90, 100]) */
+  scrollDepthIntervals?: number[];
+  /** Whether to enable session recording (default: false) */
+  enableSessionRecording?: boolean;
+  /** Custom CDN URL for RRWeb script */
+  rrwebCdnUrl?: string;
 }
 
 /**
@@ -63,6 +73,92 @@ export interface UserInfo {
 }
 
 // =============================================================================
+// Scroll Tracking Types
+// =============================================================================
+
+/**
+ * Scroll metrics for heatmap generation
+ */
+export interface ScrollMetrics {
+  /** Current scroll depth as percentage (0-100) */
+  scroll_depth_percent: number;
+  /** Total document height in pixels */
+  document_height: number;
+  /** Viewport height in pixels */
+  viewport_height: number;
+  /** Current scroll position from top in pixels */
+  scroll_top: number;
+  /** Top of visible area as percentage of document (0-100) */
+  visible_top_percent: number;
+  /** Bottom of visible area as percentage of document (0-100) */
+  visible_bottom_percent: number;
+  /** Screen/viewport width in pixels */
+  screen_width: number;
+  /** Screen/viewport height in pixels */
+  screen_height: number;
+}
+
+/**
+ * Scroll snapshot with timestamp
+ */
+export interface ScrollSnapshot extends ScrollMetrics {
+  /** Timestamp when this snapshot was taken */
+  timestamp: number;
+}
+
+/**
+ * Complete scroll heatmap data
+ */
+export interface ScrollHeatmapData {
+  /** Maximum scroll depth reached (percentage) */
+  max_depth_percent: number;
+  /** Array of milestone percentages that were reached */
+  milestones_reached: number[];
+  /** Array of scroll snapshots for detailed analysis */
+  snapshots: ScrollSnapshot[];
+  /** Current scroll metrics */
+  current_metrics: ScrollMetrics;
+}
+
+// =============================================================================
+// Session Recording Types
+// =============================================================================
+
+/**
+ * Session recording status
+ */
+export interface RecordingStatus {
+  /** Whether recording is currently active */
+  isRecording: boolean;
+  /** Number of events in the current buffer */
+  eventCount: number;
+  /** Whether the RRWeb library has been loaded */
+  rrwebLoaded: boolean;
+}
+
+/**
+ * Options for starting session recording
+ */
+export interface RecordingOptions {
+  /** Time in ms between full DOM snapshots (default: 10 minutes) */
+  checkoutEveryNms?: number;
+  /** CSS class to block from recording */
+  blockClass?: string;
+  /** CSS class to ignore input values */
+  ignoreClass?: string;
+  /** CSS class to mask text content */
+  maskTextClass?: string;
+  /** Mask all input values for privacy (default: true) */
+  maskAllInputs?: boolean;
+  /** Specific input types to mask */
+  maskInputOptions?: {
+    password?: boolean;
+    email?: boolean;
+    [key: string]: boolean | undefined;
+  };
+}
+
+// =============================================================================
 // Core API Interface
 // =============================================================================
 
@@ -85,6 +181,14 @@ export interface ZoriCoreAPI {
   optOut: () => boolean;
   /** Check if user has given consent */
   hasConsent: () => boolean;
+  /** Get scroll heatmap data */
+  getScrollData: () => ScrollHeatmapData | null;
+  /** Start session recording */
+  startRecording: (options?: RecordingOptions) => Promise<boolean>;
+  /** Stop session recording */
+  stopRecording: () => boolean;
+  /** Get current recording status */
+  getRecordingStatus: () => RecordingStatus;
 }
 
 // =============================================================================
